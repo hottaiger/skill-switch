@@ -363,9 +363,7 @@ pub fn import_candidate(
                     &error,
                 ));
             }
-            if let Err(error) = replace_source_with_link(&source, &destination, &destination) {
-                return Err(error);
-            }
+            replace_source_with_link(&source, &destination, &destination)?;
             Ok(ImportResult {
                 app: request.app,
                 name: request.name,

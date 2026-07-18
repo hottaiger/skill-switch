@@ -106,8 +106,10 @@ pub struct SettingsLoad {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct AppPaths {
+pub struct SettingsSnapshot {
+    pub settings: Settings,
     pub paths: BTreeMap<AppKind, String>,
+    pub warning: Option<CommandError>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -195,4 +197,12 @@ pub struct ImportResult {
     pub name: String,
     pub outcome: ImportOutcome,
     pub backup: BackupRecord,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportExecution {
+    pub request: ImportRequest,
+    pub result: Option<ImportResult>,
+    pub error: Option<CommandError>,
 }
