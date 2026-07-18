@@ -1,0 +1,21 @@
+[package]
+name = "skill-switch"
+version = "0.1.0"
+description = "A local-first Agent Skills manager"
+authors = ["Skill Switch contributors"]
+edition = "2021"
+
+[lib]
+name = "skill_switch_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.6.3", features = [] }
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tauri = { version = "2.11.5", features = [] }
+
+[dev-dependencies]
+tempfile = "3"
