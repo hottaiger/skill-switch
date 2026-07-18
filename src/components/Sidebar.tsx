@@ -1,0 +1,63 @@
+import { APP_LABELS, MANAGED_APPS, type AppKind, type Section } from "../types";
+
+interface SidebarProps {
+  section: Section;
+  skillCount: number;
+  appFilter?: AppKind;
+  onSectionChange: (section: Section) => void;
+  onAppFilter: (app: AppKind) => void;
+}
+
+const navigation: Array<{ id: Section; icon: string; label: string }> = [
+  { id: "library", icon: "◫", label: "技能库" },
+  { id: "import", icon: "↓", label: "本地导入" },
+  { id: "backups", icon: "↺", label: "备份" },
+];
+
+export function Sidebar({
+  section,
+  skillCount,
+  appFilter,
+  onSectionChange,
+  onAppFilter,
+}: SidebarProps) {
+  return (
+    <aside className="sidebar">
+      <div className="brand"><span className="brand-mark">SS</span><span>Skill Switch</span></div>
+      <div className="nav-group-label">管理</div>
+      <nav aria-label="主导航">
+        {navigation.map((item) => (
+          <button
+            key={item.id}
+            className={`nav-item ${section === item.id && !appFilter ? "active" : ""}`}
+            onClick={() => onSectionChange(item.id)}
+          >
+            <span className="nav-icon">{item.icon}</span>{item.label}
+            {item.id === "library" && <span className="nav-count">{skillCount}</span>}
+          </button>
+        ))}
+      </nav>
+      <div className="nav-group-label">应用</div>
+      <nav aria-label="应用筛选">
+        {MANAGED_APPS.map((app) => (
+          <button
+            key={app}
+            className={`nav-item ${section === "library" && appFilter === app ? "active" : ""}`}
+            onClick={() => onAppFilter(app)}
+          >
+            <span className="app-monogram">{APP_LABELS[app].slice(0, 1)}</span>
+            {APP_LABELS[app]}
+          </button>
+        ))}
+      </nav>
+      <div className="nav-group-label">系统</div>
+      <button
+        className={`nav-item ${section === "settings" ? "active" : ""}`}
+        onClick={() => onSectionChange("settings")}
+      >
+        <span className="nav-icon">⚙</span>设置
+      </button>
+      <span className="version">Skill Switch · v0.1</span>
+    </aside>
+  );
+}
