@@ -178,3 +178,52 @@ it("saves editable managed-app paths while native paths remain fixed", async () 
   await waitFor(() => expect(mocks.updateAppPath).toHaveBeenCalledWith("claude", "/custom/claude"));
   expect(screen.getAllByText("/Users/test/.agents/skills")).toHaveLength(2);
 });
+
+it("surfaces a corrupted configuration warning", async () => {
+  mocks.getSettings.mockResolvedValue({
+    ...settings,
+    warning: { code: "configCorrupted", message: "配置文件损坏，已加载默认设置" },
+  });
+  render(<App />);
+  expect(await screen.findByRole("alert")).toHaveTextContent("配置文件损坏，已加载默认设置");
+});
+
+it("shows the actual conflicting application path", async () => {
+  const conflictSnapshot = structuredClone(snapshot);
+  conflictSnapshot.skills[0].visibility[0] = {
+    app: "claude",
+    enabled: false,
+    mode: "conflict",
+    path: "/Users/test/.claude/skills/detail-koala-ui",
+  };
+  mocks.scanSkills.mockResolvedValue(conflictSnapshot);
+  render(<App />);
+  expect(await screen.findByText("/Users/test/.claude/skills/detail-koala-ui")).toBeVisible();
+});
+
+it("states backup location and retention in uninstall confirmation", async () => {
+  const user = userEvent.setup();
+  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+  render(<App />);
+  await user.click(await screen.findByRole("button", { name: /移至备份并卸载/ }));
+  expect(confirm).toHaveBeenCalledWith(expect.stringContaining("~/.skill-switch/backups/"));
+  expect(confirm).toHaveBeenCalledWith(expect.stringContaining("最多保留 5 份"));
+  confirm.mockRestore();
+});
+
+it("shows candidate modification time in the import comparison", async () => {
+  const user = userEvent.setup();
+  mocks.scanImportCandidates.mockResolvedValue([{
+    app: "gemini",
+    name: "conflicted-skill",
+    sourcePath: "/Users/test/.gemini/skills/conflicted-skill",
+    sourceModifiedAtMs: 1_700_000_000_000,
+    status: "conflict",
+    sourceHash: "source",
+    ssotHash: "ssot",
+    differences: ["内容不同：SKILL.md"],
+  }]);
+  render(<App />);
+  await user.click(await screen.findByRole("button", { name: /本地导入/ }));
+  expect(await screen.findByText(/修改时间：/)).toBeVisible();
+});

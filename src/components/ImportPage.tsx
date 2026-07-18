@@ -8,6 +8,10 @@ interface ImportPageProps {
   onImport: (candidate: ImportCandidate, decision: ImportDecision) => void;
 }
 
+function formatModifiedAt(value: number) {
+  return value ? new Date(value).toLocaleString("zh-CN") : "未知";
+}
+
 export function ImportPage({ candidates, loading, busyKey, onRefresh, onImport }: ImportPageProps) {
   return (
     <section className="secondary-page">
@@ -18,7 +22,7 @@ export function ImportPage({ candidates, loading, busyKey, onRefresh, onImport }
           const key = `${candidate.app}:${candidate.name}`;
           return (
             <article className="data-card" key={key}>
-              <div className="card-heading"><div><strong>{candidate.name}</strong><small>{APP_LABELS[candidate.app]} · {candidate.sourcePath}</small></div><span className={`status ${candidate.status}`}>{candidate.status === "ready" ? "可导入" : candidate.status === "identical" ? "内容相同" : candidate.status === "conflict" ? "需要选择" : "无效"}</span></div>
+              <div className="card-heading"><div><strong>{candidate.name}</strong><small>{APP_LABELS[candidate.app]} · {candidate.sourcePath}</small><small>修改时间：{formatModifiedAt(candidate.sourceModifiedAtMs)}</small></div><span className={`status ${candidate.status}`}>{candidate.status === "ready" ? "可导入" : candidate.status === "identical" ? "内容相同" : candidate.status === "conflict" ? "需要选择" : "无效"}</span></div>
               {candidate.differences.length > 0 && <ul className="diff-list">{candidate.differences.map((item) => <li key={item}>{item}</li>)}</ul>}
               {candidate.error && <p className="inline-error">{candidate.error.message}</p>}
               <div className="card-actions">

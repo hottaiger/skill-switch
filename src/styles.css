@@ -118,6 +118,7 @@ button:disabled { opacity: .48; cursor: default; }
 .visibility-row strong, .visibility-row small { display: block; }
 .visibility-row strong { font-size: 10px; }
 .visibility-row small { margin-top: 2px; color: var(--muted); font-size: 8px; }
+.conflict-path { display: block; max-width: 175px; margin-top: 3px; color: var(--danger); font-size: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .switch { position: relative; width: 30px; height: 18px; }
 .switch input { position: absolute; opacity: 0; }
 .switch span { position: absolute; inset: 1px 0; border-radius: 999px; background: #d8dae0; cursor: pointer; }

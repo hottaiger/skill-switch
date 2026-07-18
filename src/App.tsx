@@ -43,6 +43,7 @@ export default function App() {
       const next = await api.scanSkills();
       setSnapshot(next);
       setSelectedName((current) => current && next.skills.some((skill) => skill.name === current) ? current : next.skills[0]?.name);
+      if (next.warnings[0]) setMessage({ type: "error", text: next.warnings[0].message });
     } catch (error) {
       setMessage({ type: "error", text: errorMessage(error) });
     } finally {
@@ -71,6 +72,7 @@ export default function App() {
         setSettings(value);
         setSection(value.settings.lastSection);
         setFilter(value.settings.skillFilter);
+        if (value.warning) setMessage({ type: "error", text: value.warning.message });
       }).catch((error) => setMessage({ type: "error", text: errorMessage(error) })),
     ]);
   }, [refreshSkills]);
@@ -116,7 +118,9 @@ export default function App() {
   };
 
   const uninstall = async () => {
-    if (!selectedSkill || !window.confirm(`卸载 ${selectedSkill.name}？卸载前会创建备份。`)) return;
+    if (!selectedSkill || !window.confirm(
+      `卸载 ${selectedSkill.name}？卸载前会备份到 ~/.skill-switch/backups/，每个 Skill 最多保留 5 份。`,
+    )) return;
     setBusyKey(`${selectedSkill.name}:uninstall`); setMessage(undefined);
     try {
       await api.uninstallSkill(selectedSkill.name);

@@ -1,5 +1,6 @@
 use crate::backup_service::{copy_tree, create_backup};
 use crate::error::{CommandError, ErrorCode};
+use crate::link_manager::derive_visibility;
 use crate::models::{
     AppKind, BackupOperation, ImportCandidate, ImportDecision, ImportOutcome, ImportRequest,
     ImportResult, ImportStatus, Settings,
@@ -335,13 +336,21 @@ pub fn import_candidate(
             })
         }
         (ImportStatus::Conflict, ImportDecision::UseSource) => {
+            let visible_apps = AppKind::MANAGED
+                .into_iter()
+                .filter(|app| {
+                    derive_visibility(home, settings, &request.name, *app)
+                        .map(|state| state.enabled)
+                        .unwrap_or(false)
+                })
+                .collect();
             let backup = create_backup(
                 home,
                 &request.name,
                 &destination,
                 BackupOperation::Replace,
                 &destination,
-                Vec::new(),
+                visible_apps,
             )?;
             let temporary =
                 ssot_dir(home).join(format!(".{}.replace-{}", request.name, std::process::id()));
@@ -451,6 +460,35 @@ mod tests {
             fs::read_to_string(PathBuf::from(result.backup.path).join("content/SKILL.md")).unwrap(),
             "ssot"
         );
+    }
+
+    #[test]
+    fn replacement_backup_records_existing_visibility() {
+        let home = tempfile::tempdir().unwrap();
+        let settings = Settings::default();
+        make_skill(&ssot_dir(home.path()), "alpha", "ssot");
+        crate::link_manager::set_visibility(home.path(), &settings, "alpha", AppKind::Claude, true)
+            .unwrap();
+        make_skill(
+            &app_root(home.path(), AppKind::Gemini, &settings),
+            "alpha",
+            "source",
+        );
+        let result = import_candidate(
+            home.path(),
+            &settings,
+            ImportRequest {
+                app: AppKind::Gemini,
+                name: "alpha".into(),
+                decision: ImportDecision::UseSource,
+            },
+        )
+        .unwrap();
+        let metadata: serde_json::Value = serde_json::from_slice(
+            &fs::read(PathBuf::from(result.backup.path).join("metadata.json")).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(metadata["visibleApps"], serde_json::json!(["claude"]));
     }
 
     #[test]

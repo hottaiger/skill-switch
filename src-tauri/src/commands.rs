@@ -198,6 +198,12 @@ mod tests {
             snapshot.paths[&AppKind::Cursor],
             "/Users/example/.agents/skills"
         );
+        let json = serde_json::to_value(snapshot).unwrap();
+        assert_eq!(json["paths"]["codex"], "/Users/example/.agents/skills");
+        assert_eq!(
+            json["settings"]["appPaths"]["openCode"],
+            serde_json::Value::Null
+        );
     }
 
     #[test]

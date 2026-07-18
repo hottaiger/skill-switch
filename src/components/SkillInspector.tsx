@@ -29,7 +29,11 @@ export function SkillInspector({ skill, busyKey, onToggle, onUninstall }: SkillI
           const busy = busyKey === `${skill.name}:${app}`;
           return (
             <div className="visibility-row" key={app}>
-              <div><strong>{APP_LABELS[app]}</strong><small>{native ? "读取唯一数据源" : state?.mode === "conflict" ? "目标路径冲突" : "逐项软连接"}</small></div>
+              <div>
+                <strong>{APP_LABELS[app]}</strong>
+                <small>{native ? "读取唯一数据源" : state?.mode === "conflict" ? "目标路径冲突" : "逐项软连接"}</small>
+                {state?.mode === "conflict" && state.path && <code className="conflict-path">{state.path}</code>}
+              </div>
               {native ? <span className="auto-badge">自动可见</span> : (
                 <label className="switch">
                   <input
