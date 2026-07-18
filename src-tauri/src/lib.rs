@@ -1,5 +1,6 @@
 mod config_store;
 mod error;
+mod link_manager;
 mod models;
 mod paths;
 mod skill_fs;
