@@ -14,7 +14,7 @@ function formatModifiedAt(value: number) {
 
 export function ImportPage({ candidates, loading, busyKey, onRefresh, onImport }: ImportPageProps) {
   return (
-    <section className="secondary-page">
+    <section className="secondary-page import-page">
       <div className="page-title-row"><div><h1>本地导入</h1><p>仅扫描 Claude、Gemini、OpenCode 和 Hermes</p></div><button className="ghost-button" onClick={onRefresh} disabled={loading}>↻ 重新扫描</button></div>
       <div className="notice-card">导入后内容归一到 <code>~/.agents/skills/</code>，原位置替换为软连接，并保留可恢复备份。</div>
       <div className="card-list">

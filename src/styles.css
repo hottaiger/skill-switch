@@ -179,6 +179,12 @@ button:disabled { opacity: .48; cursor: default; }
 .diff-list { margin: 14px 0 0; padding: 11px 11px 11px 28px; border-radius: 7px; background: var(--panel-soft); color: var(--text-2); font-size: var(--font-secondary); }
 .inline-error, .error-banner { color: var(--danger); font-size: var(--font-secondary); }
 .card-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+.import-page .data-card { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; padding: 11px 14px; }
+.import-page .card-heading { flex: 1 1 480px; }
+.import-page .card-heading small { margin-top: 1px; }
+.import-page .status { flex: none; padding: 4px 7px; }
+.import-page .card-actions { flex: none; margin: 0; }
+.import-page .diff-list, .import-page .inline-error { flex-basis: 100%; width: 100%; }
 .data-card.compact code { display: block; margin-top: 10px; color: var(--muted); font-size: var(--font-secondary); }
 .settings-page { max-width: 900px; }
 .path-setting { display: grid; grid-template-columns: 105px minmax(200px, 1fr) auto; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--line-soft); }
