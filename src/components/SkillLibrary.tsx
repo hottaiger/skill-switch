@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { APP_LABELS, MANAGED_APPS, type AppKind, type LibraryView, type SkillFilter, type SkillRecord } from "../types";
+import { AppIcon } from "./AppIcon";
 
 interface SkillLibraryProps {
   skills: SkillRecord[];
@@ -130,7 +131,7 @@ export function SkillLibrary({
                 <span className="skill-mark">{skill.name.slice(0, 2).toUpperCase()}</span>
                 <strong className="skill-card-name">{skill.name}</strong>
                 <span className="skill-card-apps" aria-label="支持的应用">
-                  {supportedApps(skill).map((app) => <span className="skill-card-app" key={app} title={APP_LABELS[app]}>{APP_LABELS[app].slice(0, 1)}</span>)}
+                  {supportedApps(skill).map((app) => <span className="skill-card-app" key={app} title={APP_LABELS[app]}><AppIcon app={app} /></span>)}
                 </span>
               </>}
             </button>

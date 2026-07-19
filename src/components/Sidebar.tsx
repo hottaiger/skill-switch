@@ -1,4 +1,5 @@
 import { APP_LABELS, MANAGED_APPS, type AppKind, type Section } from "../types";
+import { AppIcon } from "./AppIcon";
 
 interface SidebarProps {
   section: Section;
@@ -45,7 +46,7 @@ export function Sidebar({
             className={`nav-item ${section === "library" && appFilter === app ? "active" : ""}`}
             onClick={() => onAppFilter(app)}
           >
-            <span className="app-monogram">{APP_LABELS[app].slice(0, 1)}</span>
+            <span className="app-monogram"><AppIcon app={app} /></span>
             {APP_LABELS[app]}
           </button>
         ))}
