@@ -132,9 +132,9 @@ button:disabled { opacity: .48; cursor: default; }
 .visibility-row strong { font-size: var(--font-secondary); }
 .visibility-row small { margin-top: 3px; color: var(--muted); font-size: var(--font-secondary); }
 .conflict-path { display: block; max-width: 175px; margin-top: 3px; color: var(--danger); font-size: var(--font-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.switch { position: relative; width: 34px; height: 20px; }
+.switch { position: relative; width: 34px; height: 32px; }
 .switch input { position: absolute; opacity: 0; }
-.switch span { position: absolute; inset: 1px 0; border-radius: 999px; background: var(--switch-off); cursor: pointer; transition: background-color 150ms ease; }
+.switch span { position: absolute; top: 7px; right: 0; bottom: 7px; left: 0; border-radius: 999px; background: var(--switch-off); cursor: pointer; transition: background-color 150ms ease; }
 .switch span::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--on-accent); box-shadow: 0 1px 2px var(--line); transition: left 150ms ease; }
 .switch input:checked + span { background: var(--accent); }
 .switch input:checked + span::after { left: 18px; }
@@ -147,7 +147,7 @@ button:disabled { opacity: .48; cursor: default; }
 .message-banner { position: absolute; z-index: 5; top: 10px; left: 50%; display: flex; align-items: center; gap: 12px; max-width: calc(100% - 30px); min-height: 36px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); box-shadow: var(--shadow); transform: translateX(-50%); font-size: var(--font-secondary); }
 .message-banner.error { color: var(--danger); background: var(--danger-bg); }
 .message-banner.success { color: var(--success); background: var(--success-bg); }
-.message-banner button { min-width: 24px; min-height: 24px; border: 0; background: transparent; color: inherit; cursor: pointer; }
+.message-banner button { min-width: 32px; min-height: 32px; border: 0; background: transparent; color: inherit; cursor: pointer; }
 
 .secondary-page { padding: 28px 24px; }
 .notice-card, .settings-card { padding: 15px; margin-bottom: 16px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel-soft); color: var(--text-2); font-size: var(--font-secondary); line-height: 1.5; }
