@@ -166,11 +166,14 @@ pub fn update_app_path(
 pub fn update_ui_preferences(
     last_section: String,
     skill_filter: String,
+    library_view: String,
 ) -> Result<SettingsSnapshot, CommandError> {
     let allowed_sections = ["library", "import", "backups", "settings"];
     let allowed_filters = ["all", "enabled", "disabled"];
+    let allowed_views = ["list", "cards"];
     if !allowed_sections.contains(&last_section.as_str())
         || !allowed_filters.contains(&skill_filter.as_str())
+        || !allowed_views.contains(&library_view.as_str())
     {
         return Err(CommandError::new(ErrorCode::InvalidPath, "界面偏好值无效"));
     }
@@ -178,6 +181,7 @@ pub fn update_ui_preferences(
     let (mut settings, _) = loaded_settings(&home)?;
     settings.last_section = last_section;
     settings.skill_filter = skill_filter;
+    settings.library_view = library_view;
     save_settings(&home, &settings)?;
     Ok(settings_snapshot(&home, settings, None))
 }

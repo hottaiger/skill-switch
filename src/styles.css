@@ -64,8 +64,7 @@ button, input { font: inherit; }
 button { color: inherit; }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-.app-shell { display: grid; grid-template-columns: 170px minmax(0, 1fr) 280px; height: 100vh; background: var(--window); }
-.app-shell.wide .main-panel { grid-column: 2 / 4; }
+.app-shell { display: grid; grid-template-columns: 170px minmax(0, 1fr); height: 100vh; background: var(--window); }
 .sidebar { position: relative; padding: 20px 12px; background: var(--sidebar); border-right: 1px solid var(--line); overflow-y: auto; }
 .brand { display: flex; align-items: center; gap: 10px; padding: 1px 8px 22px; font-size: var(--font-body); font-weight: 680; }
 .brand-mark { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; color: var(--on-accent); background: var(--accent); box-shadow: 0 5px 14px var(--accent-ring); font-size: var(--font-secondary); }
@@ -80,7 +79,6 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 
 .main-panel { position: relative; min-width: 0; background: var(--panel); overflow: hidden; }
 .library-page { display: flex; flex-direction: column; height: 100%; }
-.toolbar { display: flex; align-items: center; gap: 10px; min-height: 68px; padding: 16px 18px; border-bottom: 1px solid var(--line-soft); }
 .search-box { display: flex; flex: 1; align-items: center; gap: 8px; height: var(--control-height); padding: 0 11px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel-soft); color: var(--muted); transition: border-color 150ms ease, box-shadow 150ms ease; }
 .search-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-ring); }
 .search-box input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; color: var(--text); font-size: var(--font-secondary); }
@@ -93,35 +91,51 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 button:disabled { opacity: .48; cursor: default; }
 
 .page-body, .secondary-page { height: 100%; padding: 22px 20px; overflow-y: auto; }
+.library-body { display: flex; min-height: 0; flex-direction: column; overflow: hidden; }
 .page-title-row { display: flex; align-items: flex-end; gap: 12px; margin-bottom: 18px; }
 .page-title-row > div:first-child { flex: 1; }
 .page-title-row h1 { margin: 0 0 4px; font-size: var(--font-title); letter-spacing: -.4px; }
 .page-title-row p { margin: 0; color: var(--muted); font-size: var(--font-secondary); }
-.filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.page-actions { display: flex; align-items: center; gap: 8px; }
+.library-controls { display: grid; grid-template-columns: minmax(180px, 1fr) auto auto; align-items: center; gap: 10px; margin-bottom: 14px; }
+.library-controls .search-box { min-width: 0; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; }
 .filters button { min-height: 32px; padding: 6px 11px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); color: var(--text-2); font-size: var(--font-secondary); cursor: pointer; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease; }
 .filters button:hover { background: var(--hover); }
 .filters button.active { border-color: var(--accent); background: var(--selected); color: var(--accent); }
+.view-switch { display: flex; padding: 3px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel-soft); }
+.view-switch button { min-height: 28px; padding: 4px 9px; border: 0; border-radius: 5px; background: transparent; color: var(--muted); font-size: var(--font-secondary); cursor: pointer; }
+.view-switch button.active { background: var(--panel); color: var(--text); box-shadow: 0 1px 2px var(--line-soft); }
+.collection-scroll { min-height: 0; flex: 1; overflow: auto; container-type: inline-size; }
 .skill-list { border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
-.skill-row { display: grid; grid-template-columns: 32px minmax(150px, 1fr) auto; align-items: center; gap: 11px; width: 100%; min-height: 64px; padding: 13px; border: 0; border-bottom: 1px solid var(--line-soft); background: var(--panel); text-align: left; cursor: pointer; transition: background-color 150ms ease, box-shadow 150ms ease; }
+.skill-row { display: grid; grid-template-columns: 32px minmax(150px, 1fr) 92px; align-items: center; gap: 10px; width: 100%; min-height: 54px; padding: 10px 12px; border: 0; border-bottom: 1px solid var(--line-soft); background: var(--panel); text-align: left; cursor: pointer; transition: background-color 150ms ease, box-shadow 150ms ease; }
 .skill-row:last-child { border-bottom: 0; }
 .skill-row:hover { background: var(--hover); }
 .skill-row.selected { background: var(--selected); box-shadow: inset 3px 0 var(--accent); }
-.skill-mark { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 7px; background: var(--hover); color: var(--text-2); font-size: var(--font-secondary); font-weight: 700; }
+.skill-mark { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 7px; background: var(--hover); color: var(--text-2); font-size: var(--font-secondary); font-weight: 700; }
 .skill-row.selected .skill-mark { background: var(--accent-ring); color: var(--accent); }
 .skill-copy { min-width: 0; }
 .skill-copy strong, .skill-copy small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .skill-copy strong { font-size: var(--font-body); }
 .skill-copy small { margin-top: 3px; color: var(--muted); font-size: var(--font-secondary); }
-.app-chips { display: flex; gap: 5px; }
-.app-chips span { display: grid; place-items: center; width: 26px; height: 26px; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); font-size: var(--font-secondary); }
-.app-chips span.enabled { border-color: var(--success); background: var(--success-bg); color: var(--success); }
+.visibility-summary { justify-self: end; color: var(--text-2); font-size: var(--font-secondary); white-space: nowrap; }
+.visibility-summary.disabled { padding: 4px 7px; border-radius: 999px; background: var(--hover); color: var(--muted); }
+.skill-grid { display: grid; grid-template-columns: repeat(auto-fill, 128px); gap: 8px; }
+.skill-card { min-width: 0; aspect-ratio: 1; padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); text-align: center; cursor: pointer; transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease; }
+.skill-card:hover { background: var(--hover); }
+.skill-card.selected { border-color: var(--accent); background: var(--selected); box-shadow: 0 0 0 1px var(--accent-ring); }
+.skill-card-name { max-width: 100%; color: var(--text); font-size: var(--font-secondary); font-weight: 650; line-height: 1.3; overflow-wrap: anywhere; }
+.skill-card-apps { display: flex; flex: none; align-items: center; justify-content: center; gap: 5px; }
+.skill-card-app { display: grid; place-items: center; width: 22px; height: 22px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel-soft); color: var(--muted); font-size: var(--font-secondary); font-weight: 650; }
 .empty-state { display: grid; place-items: center; gap: 6px; min-height: 180px; padding: 30px; color: var(--muted); text-align: center; }
 .empty-state strong { color: var(--text-2); font-size: var(--font-body); }
 .empty-state span { font-size: var(--font-secondary); }
 
-.inspector { padding: 20px 18px; border-left: 1px solid var(--line); background: var(--panel-soft); overflow-y: auto; }
-.inspector-empty { display: grid; place-items: center; color: var(--muted); font-size: var(--font-secondary); }
-.inspector .eyebrow { margin: 0 0 8px; }
+.inspector { position: fixed; top: 0; right: 0; bottom: 0; z-index: 20; width: 320px; padding: 18px; border-left: 1px solid var(--line); background: var(--panel-soft); box-shadow: var(--shadow); overflow-y: auto; animation: drawer-in 160ms ease-out; }
+.inspector-topbar { display: flex; align-items: center; justify-content: space-between; min-height: 32px; margin-bottom: 8px; }
+.inspector .eyebrow { margin: 0; }
+.inspector-close { display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); color: var(--text-2); font-size: 18px; cursor: pointer; }
+.inspector-close:hover { background: var(--hover); }
 .inspector h2 { margin: 0 0 6px; font-size: 18px; overflow-wrap: anywhere; }
 .inspector .meta { margin: 0 0 16px; color: var(--muted); font-size: var(--font-secondary); }
 .description { padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--text-2); font-size: var(--font-secondary); line-height: 1.55; }
@@ -143,6 +157,7 @@ button:disabled { opacity: .48; cursor: default; }
 .path-box { display: block; padding: 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); color: var(--muted); font-size: var(--font-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .danger-button { width: 100%; margin-top: 16px; padding: 7px 0; border: 0; background: transparent; color: var(--danger); font-size: var(--font-secondary); }
 .danger-button:hover { background: var(--danger-bg); }
+@keyframes drawer-in { from { transform: translateX(14px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
 .message-banner { position: absolute; z-index: 5; top: 10px; left: 50%; display: flex; align-items: center; gap: 12px; max-width: calc(100% - 30px); min-height: 36px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); box-shadow: var(--shadow); transform: translateX(-50%); font-size: var(--font-secondary); }
 .message-banner.error { color: var(--danger); background: var(--danger-bg); }
@@ -177,7 +192,7 @@ button:disabled { opacity: .48; cursor: default; }
 
 @media (max-width: 899px) {
   .app-shell { grid-template-columns: 145px minmax(0, 1fr); }
-  .inspector { display: none; }
-  .app-shell.wide .main-panel { grid-column: 2; }
-  .app-chips { display: none; }
+  .inspector { width: min(320px, calc(100vw - 24px)); }
+  .library-controls { grid-template-columns: minmax(160px, 1fr) auto; }
+  .filters { grid-column: 1 / 3; grid-row: 2; }
 }

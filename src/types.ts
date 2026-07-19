@@ -2,6 +2,7 @@ export type AppKind = "claude" | "gemini" | "openCode" | "hermes" | "codex" | "c
 export type VisibilityMode = "linked" | "disabled" | "auto" | "conflict";
 export type Section = "library" | "import" | "backups" | "settings";
 export type SkillFilter = "all" | "enabled" | "disabled";
+export type LibraryView = "list" | "cards";
 
 export interface CommandError {
   code: string;
@@ -45,6 +46,7 @@ export interface Settings {
   appPaths: AppPathOverrides;
   lastSection: Section;
   skillFilter: SkillFilter;
+  libraryView: LibraryView;
 }
 
 export interface SettingsSnapshot {

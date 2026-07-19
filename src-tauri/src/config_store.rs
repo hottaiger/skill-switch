@@ -81,4 +81,16 @@ mod tests {
         assert_eq!(loaded.warning.unwrap().code, ErrorCode::ConfigCorrupted);
         assert_eq!(fs::read(&path).unwrap(), b"not json");
     }
+
+    #[test]
+    fn legacy_settings_default_to_list_view() {
+        let home = tempfile::tempdir().unwrap();
+        fs::create_dir_all(home.path().join(".skill-switch")).unwrap();
+        fs::write(
+            home.path().join(".skill-switch/config.json"),
+            br#"{"schemaVersion":1,"appPaths":{},"lastSection":"library","skillFilter":"all"}"#,
+        )
+        .unwrap();
+        assert_eq!(load_settings(home.path()).unwrap().settings.library_view, "list");
+    }
 }

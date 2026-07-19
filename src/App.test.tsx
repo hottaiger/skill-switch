@@ -59,7 +59,7 @@ const snapshot: ScanSnapshot = {
 };
 
 const settings: SettingsSnapshot = {
-  settings: { schemaVersion: 1, appPaths: {}, lastSection: "library", skillFilter: "all" },
+  settings: { schemaVersion: 1, appPaths: {}, lastSection: "library", skillFilter: "all", libraryView: "list" },
   paths: {
     claude: "/Users/test/.claude/skills",
     gemini: "/Users/test/.gemini/skills",
@@ -81,18 +81,46 @@ beforeEach(() => {
 
 afterEach(cleanup);
 
-it("selects the first Skill and renders fixed native visibility", async () => {
+it("opens the inspector from a selected Skill and renders fixed native visibility", async () => {
+  const user = userEvent.setup();
   render(<App />);
+  expect(await screen.findByRole("option", { name: "detail-koala-ui" })).toBeVisible();
+  expect(screen.queryByRole("dialog", { name: "Skill 详情" })).not.toBeInTheDocument();
+  await user.click(screen.getByRole("option", { name: "detail-koala-ui" }));
   expect(await screen.findByRole("heading", { name: "detail-koala-ui" })).toBeVisible();
   expect(screen.getAllByText("Koala UI 组件规范")).toHaveLength(2);
   expect(screen.getAllByText("自动可见")).toHaveLength(2);
   expect(screen.queryByRole("switch", { name: "Codex" })).not.toBeInTheDocument();
 });
 
+it("switches to cards while preserving filtering and persists the choice", async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await screen.findByRole("option", { name: "detail-koala-ui" });
+  await user.click(screen.getByRole("button", { name: "卡片" }));
+  expect(screen.getByRole("button", { name: "卡片" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByRole("option", { name: "detail-koala-ui" })).toBeVisible();
+  expect(mocks.updateUiPreferences).toHaveBeenCalledWith("library", "all", "cards");
+  await user.click(screen.getByRole("option", { name: "detail-koala-ui" }));
+  expect(await screen.findByRole("dialog", { name: "Skill 详情" })).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "关闭详情" }));
+  expect(screen.queryByRole("dialog", { name: "Skill 详情" })).not.toBeInTheDocument();
+});
+
+it("supports keyboard selection in the skill collection", async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  const first = await screen.findByRole("option", { name: "detail-koala-ui" });
+  await user.click(first);
+  await user.keyboard("{ArrowDown}");
+  expect(await screen.findByRole("heading", { name: "unit-test-skill" })).toBeVisible();
+  expect(screen.getByRole("option", { name: "unit-test-skill" })).toHaveFocus();
+});
+
 it("searches and filters the live snapshot", async () => {
   const user = userEvent.setup();
   render(<App />);
-  await screen.findByRole("heading", { name: "detail-koala-ui" });
+  await screen.findByRole("option", { name: "detail-koala-ui" });
   await user.type(screen.getByRole("textbox", { name: "搜索 Skills" }), "unit-test");
   const listbox = screen.getByRole("listbox", { name: "已安装 Skills" });
   expect(within(listbox).getByText("unit-test-skill")).toBeVisible();
@@ -103,6 +131,7 @@ it("keeps disk-derived toggle state and shows backend errors", async () => {
   const user = userEvent.setup();
   mocks.setSkillVisibility.mockRejectedValue({ code: "symlinkFailed", message: "权限不足" });
   render(<App />);
+  await user.click(await screen.findByRole("option", { name: "detail-koala-ui" }));
   const claude = await screen.findByRole("switch", { name: "Claude" });
   expect(claude).toBeChecked();
   await user.click(claude);
@@ -189,6 +218,7 @@ it("surfaces a corrupted configuration warning", async () => {
 });
 
 it("shows the actual conflicting application path", async () => {
+  const user = userEvent.setup();
   const conflictSnapshot = structuredClone(snapshot);
   conflictSnapshot.skills[0].visibility[0] = {
     app: "claude",
@@ -198,6 +228,7 @@ it("shows the actual conflicting application path", async () => {
   };
   mocks.scanSkills.mockResolvedValue(conflictSnapshot);
   render(<App />);
+  await user.click(await screen.findByRole("option", { name: "detail-koala-ui" }));
   expect(await screen.findByText("/Users/test/.claude/skills/detail-koala-ui")).toBeVisible();
 });
 
@@ -205,6 +236,7 @@ it("states backup location and retention in uninstall confirmation", async () =>
   const user = userEvent.setup();
   const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
   render(<App />);
+  await user.click(await screen.findByRole("option", { name: "detail-koala-ui" }));
   await user.click(await screen.findByRole("button", { name: /移至备份并卸载/ }));
   expect(confirm).toHaveBeenCalledWith(expect.stringContaining("~/.skill-switch/backups/"));
   expect(confirm).toHaveBeenCalledWith(expect.stringContaining("最多保留 5 份"));

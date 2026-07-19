@@ -6,6 +6,7 @@ import type {
   ImportExecution,
   ImportRequest,
   ScanSnapshot,
+  LibraryView,
   Section,
   SettingsSnapshot,
   SkillFilter,
@@ -29,6 +30,6 @@ export const api = {
   getSettings: () => invoke<SettingsSnapshot>("get_settings"),
   updateAppPath: (app: AppKind, path?: string) =>
     invoke<SettingsSnapshot>("update_app_path", { app, path: path || null }),
-  updateUiPreferences: (lastSection: Section, skillFilter: SkillFilter) =>
-    invoke<SettingsSnapshot>("update_ui_preferences", { lastSection, skillFilter }),
+  updateUiPreferences: (lastSection: Section, skillFilter: SkillFilter, libraryView: LibraryView) =>
+    invoke<SettingsSnapshot>("update_ui_preferences", { lastSection, skillFilter, libraryView }),
 };

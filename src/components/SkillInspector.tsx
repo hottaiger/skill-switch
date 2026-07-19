@@ -3,6 +3,7 @@ import { ALL_APPS, APP_LABELS, type AppKind, type SkillRecord } from "../types";
 interface SkillInspectorProps {
   skill?: SkillRecord;
   busyKey?: string;
+  onClose: () => void;
   onToggle: (app: AppKind, enabled: boolean) => void;
   onUninstall: () => void;
 }
@@ -11,13 +12,11 @@ function formatSize(bytes: number) {
   return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
 }
 
-export function SkillInspector({ skill, busyKey, onToggle, onUninstall }: SkillInspectorProps) {
-  if (!skill) {
-    return <aside className="inspector inspector-empty"><span>选择一个 Skill 查看详情</span></aside>;
-  }
+export function SkillInspector({ skill, busyKey, onClose, onToggle, onUninstall }: SkillInspectorProps) {
+  if (!skill) return null;
   return (
-    <aside className="inspector">
-      <span className="eyebrow">SKILL 详情</span>
+    <aside className="inspector" role="dialog" aria-label="Skill 详情">
+      <div className="inspector-topbar"><span className="eyebrow">SKILL 详情</span><button className="inspector-close" aria-label="关闭详情" onClick={onClose}>×</button></div>
       <h2>{skill.name}</h2>
       <p className="meta">本地 · {formatSize(skill.sizeBytes)}</p>
       <div className="description">{skill.description || "该 Skill 未提供 description。"}</div>

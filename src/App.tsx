@@ -12,6 +12,7 @@ import type {
   CommandError,
   ImportCandidate,
   ImportDecision,
+  LibraryView,
   ScanSnapshot,
   Section,
   SettingsSnapshot,
@@ -32,6 +33,7 @@ export default function App() {
   const [selectedName, setSelectedName] = useState<string>();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<SkillFilter>("all");
+  const [libraryView, setLibraryView] = useState<LibraryView>("list");
   const [appFilter, setAppFilter] = useState<AppKind>();
   const [busyKey, setBusyKey] = useState<string>();
   const [loading, setLoading] = useState(true);
@@ -42,7 +44,7 @@ export default function App() {
     try {
       const next = await api.scanSkills();
       setSnapshot(next);
-      setSelectedName((current) => current && next.skills.some((skill) => skill.name === current) ? current : next.skills[0]?.name);
+      setSelectedName((current) => current && next.skills.some((skill) => skill.name === current) ? current : undefined);
       if (next.warnings[0]) setMessage({ type: "error", text: next.warnings[0].message });
     } catch (error) {
       setMessage({ type: "error", text: errorMessage(error) });
@@ -72,6 +74,7 @@ export default function App() {
         setSettings(value);
         setSection(value.settings.lastSection);
         setFilter(value.settings.skillFilter);
+        setLibraryView(value.settings.libraryView);
         if (value.warning) setMessage({ type: "error", text: value.warning.message });
       }).catch((error) => setMessage({ type: "error", text: errorMessage(error) })),
     ]);
@@ -93,8 +96,8 @@ export default function App() {
     [selectedName, snapshot],
   );
 
-  const persistPreference = (nextSection: Section, nextFilter: SkillFilter) => {
-    void api.updateUiPreferences(nextSection, nextFilter).catch(() => undefined);
+  const persistPreference = (nextSection: Section, nextFilter: SkillFilter, nextView = libraryView) => {
+    void api.updateUiPreferences(nextSection, nextFilter, nextView).catch(() => undefined);
   };
 
   const changeSection = (next: Section) => {
@@ -104,6 +107,26 @@ export default function App() {
   const changeFilter = (next: SkillFilter) => {
     setFilter(next); persistPreference(section, next);
   };
+
+  const changeLibraryView = (next: LibraryView) => {
+    setLibraryView(next); persistPreference(section, filter, next);
+  };
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (section !== "library") return;
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        document.querySelector<HTMLInputElement>('input[aria-label="搜索 Skills"]')?.focus();
+      }
+      if (event.key === "Escape" && selectedName) {
+        event.preventDefault();
+        setSelectedName(undefined);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [section, selectedName]);
 
   const toggleVisibility = async (app: AppKind, enabled: boolean) => {
     if (!selectedSkill) return;
@@ -163,7 +186,7 @@ export default function App() {
   };
 
   return (
-    <div className={`app-shell ${section === "library" ? "" : "wide"}`}>
+    <div className="app-shell">
       <Sidebar
         section={section}
         skillCount={snapshot?.skills.length || 0}
@@ -173,12 +196,12 @@ export default function App() {
       />
       <main className="main-panel">
         {message && <div role={message.type === "error" ? "alert" : "status"} className={`message-banner ${message.type}`}><span>{message.text}</span><button aria-label="关闭提示" onClick={() => setMessage(undefined)}>×</button></div>}
-        {section === "library" && <SkillLibrary skills={snapshot?.skills || []} selectedName={selectedName} search={search} filter={filter} appFilter={appFilter} loading={loading} onSearch={setSearch} onFilter={changeFilter} onSelect={setSelectedName} onRefresh={() => void refreshSkills()} onImport={() => changeSection("import")} onClearAppFilter={() => setAppFilter(undefined)} />}
+        {section === "library" && <SkillLibrary skills={snapshot?.skills || []} selectedName={selectedName} search={search} filter={filter} appFilter={appFilter} view={libraryView} loading={loading} onSearch={setSearch} onFilter={changeFilter} onViewChange={changeLibraryView} onSelect={setSelectedName} onRefresh={() => void refreshSkills()} onImport={() => changeSection("import")} onClearAppFilter={() => setAppFilter(undefined)} />}
         {section === "import" && <ImportPage candidates={candidates} loading={loading} busyKey={busyKey} onRefresh={() => void refreshImports()} onImport={(candidate, decision) => void runImport(candidate, decision)} />}
         {section === "backups" && <BackupPage backups={backups} loading={loading} busyKey={busyKey} onRefresh={() => void refreshBackups()} onRestore={(backup) => void restore(backup)} />}
         {section === "settings" && <SettingsPage snapshot={settings} busyKey={busyKey} onSave={(app, path) => void savePath(app, path)} />}
       </main>
-      {section === "library" && <SkillInspector skill={selectedSkill} busyKey={busyKey} onToggle={(app, enabled) => void toggleVisibility(app, enabled)} onUninstall={() => void uninstall()} />}
+      {section === "library" && selectedSkill && <SkillInspector skill={selectedSkill} busyKey={busyKey} onClose={() => setSelectedName(undefined)} onToggle={(app, enabled) => void toggleVisibility(app, enabled)} onUninstall={() => void uninstall()} />}
     </div>
   );
 }

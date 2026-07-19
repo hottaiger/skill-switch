@@ -45,6 +45,12 @@ pub struct Settings {
     pub app_paths: AppPathOverrides,
     pub last_section: String,
     pub skill_filter: String,
+    #[serde(default = "default_library_view")]
+    pub library_view: String,
+}
+
+fn default_library_view() -> String {
+    "list".into()
 }
 
 impl Default for Settings {
@@ -54,6 +60,7 @@ impl Default for Settings {
             app_paths: AppPathOverrides::default(),
             last_section: "library".into(),
             skill_filter: "all".into(),
+            library_view: default_library_view(),
         }
     }
 }
