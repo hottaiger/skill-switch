@@ -34,7 +34,6 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --accent: #7170ff;
     --accent-hover: #8483ff;
     --accent-ring: rgba(113, 112, 255, .24);
     --window: #08090a;
@@ -70,14 +69,14 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .sidebar { position: relative; padding: 20px 12px; background: var(--sidebar); border-right: 1px solid var(--line); overflow-y: auto; }
 .brand { display: flex; align-items: center; gap: 10px; padding: 1px 8px 22px; font-size: var(--font-body); font-weight: 680; }
 .brand-mark { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; color: var(--on-accent); background: var(--accent); box-shadow: 0 5px 14px var(--accent-ring); font-size: var(--font-secondary); }
-.nav-group-label, .eyebrow { margin: 12px 8px 6px; color: var(--muted); font-size: 10px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; }
+.nav-group-label, .eyebrow { margin: 12px 8px 6px; color: var(--muted); font-size: var(--font-secondary); font-weight: 650; letter-spacing: .08em; text-transform: uppercase; }
 .nav-item { display: flex; align-items: center; gap: 9px; width: 100%; min-height: 36px; padding: 8px 10px; margin: 2px 0; border: 0; border-radius: 7px; background: transparent; color: var(--text-2); font-size: var(--font-secondary); text-align: left; cursor: pointer; transition: background-color 150ms ease, color 150ms ease; }
 .nav-item:hover { background: var(--hover); }
 .nav-item.active { color: var(--text); background: var(--panel); box-shadow: 0 1px 2px var(--line-soft); }
 .nav-icon, .app-monogram { width: 16px; text-align: center; color: var(--muted); }
-.app-monogram { display: grid; place-items: center; height: 16px; border: 1px solid var(--line); border-radius: 4px; font-size: 9px; }
-.nav-count { margin-left: auto; color: var(--muted); font-size: 10px; }
-.version { position: absolute; bottom: 16px; left: 22px; color: var(--muted); font-size: 10px; }
+.app-monogram { display: grid; place-items: center; height: 16px; border: 1px solid var(--line); border-radius: 4px; font-size: var(--font-secondary); }
+.nav-count { margin-left: auto; color: var(--muted); font-size: var(--font-secondary); }
+.version { position: absolute; bottom: 16px; left: 22px; color: var(--muted); font-size: var(--font-secondary); }
 
 .main-panel { position: relative; min-width: 0; background: var(--panel); overflow: hidden; }
 .library-page { display: flex; flex-direction: column; height: 100%; }
@@ -85,7 +84,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .search-box { display: flex; flex: 1; align-items: center; gap: 8px; height: var(--control-height); padding: 0 11px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel-soft); color: var(--muted); transition: border-color 150ms ease, box-shadow 150ms ease; }
 .search-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-ring); }
 .search-box input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; color: var(--text); font-size: var(--font-secondary); }
-.search-box kbd { padding: 2px 5px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); font-size: 10px; }
+.search-box kbd { padding: 2px 5px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); font-size: var(--font-secondary); }
 .primary-button, .ghost-button, .danger-button { min-height: 32px; border-radius: 7px; cursor: pointer; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease; }
 .primary-button { min-height: var(--control-height); padding: 8px 13px; border: 0; background: var(--accent); color: var(--on-accent); font-size: var(--font-secondary); font-weight: 620; }
 .primary-button:hover { background: var(--accent-hover); }
@@ -107,14 +106,14 @@ button:disabled { opacity: .48; cursor: default; }
 .skill-row:last-child { border-bottom: 0; }
 .skill-row:hover { background: var(--hover); }
 .skill-row.selected { background: var(--selected); box-shadow: inset 3px 0 var(--accent); }
-.skill-mark { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 7px; background: var(--hover); color: var(--text-2); font-size: 10px; font-weight: 700; }
+.skill-mark { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 7px; background: var(--hover); color: var(--text-2); font-size: var(--font-secondary); font-weight: 700; }
 .skill-row.selected .skill-mark { background: var(--accent-ring); color: var(--accent); }
 .skill-copy { min-width: 0; }
 .skill-copy strong, .skill-copy small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .skill-copy strong { font-size: var(--font-body); }
 .skill-copy small { margin-top: 3px; color: var(--muted); font-size: var(--font-secondary); }
 .app-chips { display: flex; gap: 5px; }
-.app-chips span { display: grid; place-items: center; width: 26px; height: 26px; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); font-size: 9px; }
+.app-chips span { display: grid; place-items: center; width: 26px; height: 26px; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); font-size: var(--font-secondary); }
 .app-chips span.enabled { border-color: var(--success); background: var(--success-bg); color: var(--success); }
 .empty-state { display: grid; place-items: center; gap: 6px; min-height: 180px; padding: 30px; color: var(--muted); text-align: center; }
 .empty-state strong { color: var(--text-2); font-size: var(--font-body); }
@@ -131,8 +130,8 @@ button:disabled { opacity: .48; cursor: default; }
 .visibility-row > div { flex: 1; }
 .visibility-row strong, .visibility-row small { display: block; }
 .visibility-row strong { font-size: var(--font-secondary); }
-.visibility-row small { margin-top: 3px; color: var(--muted); font-size: 10px; }
-.conflict-path { display: block; max-width: 175px; margin-top: 3px; color: var(--danger); font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.visibility-row small { margin-top: 3px; color: var(--muted); font-size: var(--font-secondary); }
+.conflict-path { display: block; max-width: 175px; margin-top: 3px; color: var(--danger); font-size: var(--font-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .switch { position: relative; width: 34px; height: 20px; }
 .switch input { position: absolute; opacity: 0; }
 .switch span { position: absolute; inset: 1px 0; border-radius: 999px; background: var(--switch-off); cursor: pointer; transition: background-color 150ms ease; }
@@ -140,8 +139,8 @@ button:disabled { opacity: .48; cursor: default; }
 .switch input:checked + span { background: var(--accent); }
 .switch input:checked + span::after { left: 18px; }
 .switch input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
-.auto-badge { padding: 5px 7px; border-radius: 999px; background: var(--success-bg); color: var(--success); font-size: 10px; }
-.path-box { display: block; padding: 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); color: var(--muted); font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.auto-badge { padding: 5px 7px; border-radius: 999px; background: var(--success-bg); color: var(--success); font-size: var(--font-secondary); }
+.path-box { display: block; padding: 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); color: var(--muted); font-size: var(--font-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .danger-button { width: 100%; margin-top: 16px; padding: 7px 0; border: 0; background: transparent; color: var(--danger); font-size: var(--font-secondary); }
 .danger-button:hover { background: var(--danger-bg); }
 
@@ -159,19 +158,19 @@ button:disabled { opacity: .48; cursor: default; }
 .card-heading strong, .card-heading small { display: block; }
 .card-heading strong { font-size: var(--font-body); }
 .card-heading small { margin-top: 3px; color: var(--muted); font-size: var(--font-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.status { padding: 5px 8px; border-radius: 999px; background: var(--hover); color: var(--text-2); font-size: 10px; }
+.status { padding: 5px 8px; border-radius: 999px; background: var(--hover); color: var(--text-2); font-size: var(--font-secondary); }
 .status.ready, .status.identical { color: var(--success); background: var(--success-bg); }
 .status.conflict, .status.invalid { color: var(--danger); background: var(--danger-bg); }
 .diff-list { margin: 14px 0 0; padding: 11px 11px 11px 28px; border-radius: 7px; background: var(--panel-soft); color: var(--text-2); font-size: var(--font-secondary); }
 .inline-error, .error-banner { color: var(--danger); font-size: var(--font-secondary); }
 .card-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
-.data-card.compact code { display: block; margin-top: 10px; color: var(--muted); font-size: 10px; }
+.data-card.compact code { display: block; margin-top: 10px; color: var(--muted); font-size: var(--font-secondary); }
 .settings-page { max-width: 900px; }
 .path-setting { display: grid; grid-template-columns: 105px minmax(200px, 1fr) auto; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--line-soft); }
 .path-setting:last-child { border-bottom: 0; }
 .path-setting strong, .path-setting small { display: block; }
 .path-setting strong { font-size: var(--font-secondary); }
-.path-setting small { margin-top: 3px; color: var(--muted); font-size: 10px; }
+.path-setting small { margin-top: 3px; color: var(--muted); font-size: var(--font-secondary); }
 .path-setting input { width: 100%; min-height: var(--control-height); padding: 7px 9px; border: 1px solid var(--line); border-radius: 6px; outline: 0; background: var(--panel); color: var(--text); font-size: var(--font-secondary); transition: border-color 150ms ease, box-shadow 150ms ease; }
 .path-setting input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-ring); }
 .fixed-paths code { grid-column: 2 / 4; color: var(--muted); font-size: var(--font-secondary); }
