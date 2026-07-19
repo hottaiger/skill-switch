@@ -124,11 +124,9 @@ export function SkillLibrary({
               onKeyDown={(event) => moveSelection(event, skill.name)}
             >
               {view === "list" ? <>
-                <span className="skill-mark">{skill.name.slice(0, 2).toUpperCase()}</span>
                 <span className="skill-copy"><strong>{skill.name}</strong><small>{skill.description || "暂无描述"}</small></span>
                 <span className={`visibility-summary ${managedEnabled(skill) ? "" : "disabled"}`}>{visibilitySummary(skill)}</span>
               </> : <>
-                <span className="skill-mark">{skill.name.slice(0, 2).toUpperCase()}</span>
                 <strong className="skill-card-name">{skill.name}</strong>
                 <span className="skill-card-apps" aria-label="支持的应用">
                   {supportedApps(skill).map((app) => <span className="skill-card-app" key={app} title={APP_LABELS[app]}><AppIcon app={app} /></span>)}

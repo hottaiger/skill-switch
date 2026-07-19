@@ -109,12 +109,10 @@ button:disabled { opacity: .48; cursor: default; }
 .view-switch button.active { background: var(--panel); color: var(--text); box-shadow: 0 1px 2px var(--line-soft); }
 .collection-scroll { min-height: 0; flex: 1; overflow: auto; container-type: inline-size; }
 .skill-list { border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
-.skill-row { display: grid; grid-template-columns: 32px minmax(150px, 1fr) 92px; align-items: center; gap: 10px; width: 100%; min-height: 54px; padding: 10px 12px; border: 0; border-bottom: 1px solid var(--line-soft); background: var(--panel); text-align: left; cursor: pointer; transition: background-color 150ms ease, box-shadow 150ms ease; }
+.skill-row { display: grid; grid-template-columns: minmax(150px, 1fr) 92px; align-items: center; gap: 10px; width: 100%; min-height: 54px; padding: 10px 12px; border: 0; border-bottom: 1px solid var(--line-soft); background: var(--panel); text-align: left; cursor: pointer; transition: background-color 150ms ease, box-shadow 150ms ease; }
 .skill-row:last-child { border-bottom: 0; }
 .skill-row:hover { background: var(--hover); }
 .skill-row.selected { background: var(--selected); box-shadow: inset 3px 0 var(--accent); }
-.skill-mark { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 7px; background: var(--hover); color: var(--text-2); font-size: var(--font-secondary); font-weight: 700; }
-.skill-row.selected .skill-mark { background: var(--accent-ring); color: var(--accent); }
 .skill-copy { min-width: 0; }
 .skill-copy strong, .skill-copy small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .skill-copy strong { font-size: var(--font-body); }
