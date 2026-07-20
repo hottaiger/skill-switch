@@ -201,7 +201,10 @@ export default function App() {
         {section === "backups" && <BackupPage backups={backups} loading={loading} busyKey={busyKey} onRefresh={() => void refreshBackups()} onRestore={(backup) => void restore(backup)} />}
         {section === "settings" && <SettingsPage snapshot={settings} busyKey={busyKey} onSave={(app, path) => void savePath(app, path)} />}
       </main>
-      {section === "library" && selectedSkill && <SkillInspector skill={selectedSkill} busyKey={busyKey} onClose={() => setSelectedName(undefined)} onToggle={(app, enabled) => void toggleVisibility(app, enabled)} onUninstall={() => void uninstall()} />}
+      {section === "library" && selectedSkill && <>
+        <button className="inspector-backdrop" aria-label="关闭详情遮罩" onClick={() => setSelectedName(undefined)} />
+        <SkillInspector skill={selectedSkill} busyKey={busyKey} onClose={() => setSelectedName(undefined)} onToggle={(app, enabled) => void toggleVisibility(app, enabled)} onUninstall={() => void uninstall()} />
+      </>}
     </div>
   );
 }

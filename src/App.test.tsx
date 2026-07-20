@@ -91,6 +91,14 @@ it("opens the inspector from a selected Skill and renders fixed native visibilit
   expect(screen.getAllByText("Koala UI 组件规范")).toHaveLength(2);
   expect(screen.getAllByText("自动可见")).toHaveLength(2);
   expect(screen.queryByRole("switch", { name: "Codex" })).not.toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "关闭详情遮罩" }));
+  expect(screen.queryByRole("dialog", { name: "Skill 详情" })).not.toBeInTheDocument();
+});
+
+it("shows Codex and Cursor in the app filter list", async () => {
+  render(<App />);
+  expect(await screen.findByRole("button", { name: "Codex" })).toBeVisible();
+  expect(screen.getByRole("button", { name: "Cursor" })).toBeVisible();
 });
 
 it("switches to cards while preserving filtering and persists the choice", async () => {

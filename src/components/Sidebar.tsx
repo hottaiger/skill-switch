@@ -1,4 +1,4 @@
-import { APP_LABELS, MANAGED_APPS, type AppKind, type Section } from "../types";
+import { ALL_APPS, APP_LABELS, type AppKind, type Section } from "../types";
 import { AppIcon } from "./AppIcon";
 
 interface SidebarProps {
@@ -40,7 +40,7 @@ export function Sidebar({
       </nav>
       <div className="nav-group-label">应用</div>
       <nav aria-label="应用筛选">
-        {MANAGED_APPS.map((app) => (
+        {ALL_APPS.map((app) => (
           <button
             key={app}
             className={`nav-item ${section === "library" && appFilter === app ? "active" : ""}`}
