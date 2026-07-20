@@ -40,9 +40,52 @@ pub struct AppPathOverrides {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct AppSupport {
+    pub claude: bool,
+    pub gemini: bool,
+    pub open_code: bool,
+    pub hermes: bool,
+    pub codex: bool,
+    pub cursor: bool,
+}
+
+impl AppSupport {
+    pub fn is_enabled(&self, app: AppKind) -> bool {
+        match app {
+            AppKind::Claude => self.claude,
+            AppKind::Gemini => self.gemini,
+            AppKind::OpenCode => self.open_code,
+            AppKind::Hermes => self.hermes,
+            AppKind::Codex => self.codex,
+            AppKind::Cursor => self.cursor,
+        }
+    }
+
+    pub fn set_enabled(&mut self, app: AppKind, enabled: bool) {
+        match app {
+            AppKind::Claude => self.claude = enabled,
+            AppKind::Gemini => self.gemini = enabled,
+            AppKind::OpenCode => self.open_code = enabled,
+            AppKind::Hermes => self.hermes = enabled,
+            AppKind::Codex => self.codex = enabled,
+            AppKind::Cursor => self.cursor = enabled,
+        }
+    }
+}
+
+impl Default for AppSupport {
+    fn default() -> Self {
+        Self { claude: true, gemini: true, open_code: true, hermes: true, codex: true, cursor: true }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Settings {
     pub schema_version: u32,
     pub app_paths: AppPathOverrides,
+    #[serde(default)]
+    pub app_support: AppSupport,
     pub last_section: String,
     pub skill_filter: String,
     #[serde(default = "default_library_view")]
@@ -58,6 +101,7 @@ impl Default for Settings {
         Self {
             schema_version: 1,
             app_paths: AppPathOverrides::default(),
+            app_support: AppSupport::default(),
             last_section: "library".into(),
             skill_filter: "all".into(),
             library_view: default_library_view(),

@@ -30,6 +30,8 @@ export const api = {
   getSettings: () => invoke<SettingsSnapshot>("get_settings"),
   updateAppPath: (app: AppKind, path?: string) =>
     invoke<SettingsSnapshot>("update_app_path", { app, path: path || null }),
+  setAppSupport: (app: AppKind, enabled: boolean) =>
+    invoke<SettingsSnapshot>("set_app_support", { app, enabled }),
   updateUiPreferences: (lastSection: Section, skillFilter: SkillFilter, libraryView: LibraryView) =>
     invoke<SettingsSnapshot>("update_ui_preferences", { lastSection, skillFilter, libraryView }),
 };

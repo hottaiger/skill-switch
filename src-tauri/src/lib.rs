@@ -32,6 +32,7 @@ pub fn run() {
             commands::restore_backup,
             commands::get_settings,
             commands::update_app_path,
+            commands::set_app_support,
             commands::update_ui_preferences,
         ])
         .build(tauri::generate_context!())

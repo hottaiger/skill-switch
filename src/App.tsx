@@ -8,6 +8,7 @@ import { SkillInspector } from "./components/SkillInspector";
 import { SkillLibrary } from "./components/SkillLibrary";
 import type {
   AppKind,
+  AppSupport,
   BackupRecord,
   CommandError,
   ImportCandidate,
@@ -18,6 +19,8 @@ import type {
   SettingsSnapshot,
   SkillFilter,
 } from "./types";
+
+const DEFAULT_APP_SUPPORT: AppSupport = { claude: true, gemini: true, openCode: true, hermes: true, codex: true, cursor: true };
 
 function errorMessage(error: unknown) {
   if (typeof error === "object" && error && "message" in error) return String((error as CommandError).message);
@@ -95,6 +98,7 @@ export default function App() {
     () => snapshot?.skills.find((skill) => skill.name === selectedName),
     [selectedName, snapshot],
   );
+  const appSupport = settings?.settings.appSupport || DEFAULT_APP_SUPPORT;
 
   const persistPreference = (nextSection: Section, nextFilter: SkillFilter, nextView = libraryView) => {
     void api.updateUiPreferences(nextSection, nextFilter, nextView).catch(() => undefined);
@@ -185,25 +189,38 @@ export default function App() {
     finally { setBusyKey(undefined); }
   };
 
+  const toggleAppSupport = async (app: AppKind, enabled: boolean) => {
+    const key = `support:${app}`;
+    setBusyKey(key); setMessage(undefined);
+    try {
+      const next = await api.setAppSupport(app, enabled);
+      setSettings(next);
+      if (!enabled && appFilter === app) setAppFilter(undefined);
+      await Promise.all([refreshSkills(), refreshImports()]);
+    } catch (error) { setMessage({ type: "error", text: errorMessage(error) }); }
+    finally { setBusyKey(undefined); }
+  };
+
   return (
     <div className="app-shell">
       <Sidebar
         section={section}
         skillCount={snapshot?.skills.length || 0}
         appFilter={appFilter}
+        appSupport={appSupport}
         onSectionChange={changeSection}
         onAppFilter={(app) => { setSection("library"); setAppFilter(app); persistPreference("library", filter); }}
       />
       <main className="main-panel">
         {message && <div role={message.type === "error" ? "alert" : "status"} className={`message-banner ${message.type}`}><span>{message.text}</span><button aria-label="关闭提示" onClick={() => setMessage(undefined)}>×</button></div>}
-        {section === "library" && <SkillLibrary skills={snapshot?.skills || []} selectedName={selectedName} search={search} filter={filter} appFilter={appFilter} view={libraryView} loading={loading} onSearch={setSearch} onFilter={changeFilter} onViewChange={changeLibraryView} onSelect={setSelectedName} onRefresh={() => void refreshSkills()} onImport={() => changeSection("import")} onClearAppFilter={() => setAppFilter(undefined)} />}
-        {section === "import" && <ImportPage candidates={candidates} loading={loading} busyKey={busyKey} onRefresh={() => void refreshImports()} onImport={(candidate, decision) => void runImport(candidate, decision)} />}
+        {section === "library" && <SkillLibrary skills={snapshot?.skills || []} selectedName={selectedName} search={search} filter={filter} appFilter={appFilter} appSupport={appSupport} view={libraryView} loading={loading} onSearch={setSearch} onFilter={changeFilter} onViewChange={changeLibraryView} onSelect={setSelectedName} onRefresh={() => void refreshSkills()} onImport={() => changeSection("import")} onClearAppFilter={() => setAppFilter(undefined)} />}
+        {section === "import" && <ImportPage candidates={candidates} loading={loading} busyKey={busyKey} appSupport={appSupport} onRefresh={() => void refreshImports()} onImport={(candidate, decision) => void runImport(candidate, decision)} />}
         {section === "backups" && <BackupPage backups={backups} loading={loading} busyKey={busyKey} onRefresh={() => void refreshBackups()} onRestore={(backup) => void restore(backup)} />}
-        {section === "settings" && <SettingsPage snapshot={settings} busyKey={busyKey} onSave={(app, path) => void savePath(app, path)} />}
+        {section === "settings" && <SettingsPage snapshot={settings} busyKey={busyKey} onSave={(app, path) => void savePath(app, path)} onToggleSupport={(app, enabled) => void toggleAppSupport(app, enabled)} />}
       </main>
       {section === "library" && selectedSkill && <>
         <button className="inspector-backdrop" aria-label="关闭详情遮罩" onClick={() => setSelectedName(undefined)} />
-        <SkillInspector skill={selectedSkill} busyKey={busyKey} onClose={() => setSelectedName(undefined)} onToggle={(app, enabled) => void toggleVisibility(app, enabled)} onUninstall={() => void uninstall()} />
+        <SkillInspector skill={selectedSkill} busyKey={busyKey} appSupport={appSupport} onClose={() => setSelectedName(undefined)} onToggle={(app, enabled) => void toggleVisibility(app, enabled)} onUninstall={() => void uninstall()} />
       </>}
     </div>
   );

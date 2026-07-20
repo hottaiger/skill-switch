@@ -1,9 +1,10 @@
-import { APP_LABELS, type ImportCandidate, type ImportDecision } from "../types";
+import { APP_LABELS, MANAGED_APPS, type AppSupport, type ImportCandidate, type ImportDecision } from "../types";
 
 interface ImportPageProps {
   candidates: ImportCandidate[];
   loading: boolean;
   busyKey?: string;
+  appSupport: AppSupport;
   onRefresh: () => void;
   onImport: (candidate: ImportCandidate, decision: ImportDecision) => void;
 }
@@ -12,10 +13,11 @@ function formatModifiedAt(value: number) {
   return value ? new Date(value).toLocaleString("zh-CN") : "未知";
 }
 
-export function ImportPage({ candidates, loading, busyKey, onRefresh, onImport }: ImportPageProps) {
+export function ImportPage({ candidates, loading, busyKey, appSupport, onRefresh, onImport }: ImportPageProps) {
+  const scanLabels = MANAGED_APPS.filter((app) => appSupport[app]).map((app) => APP_LABELS[app]);
   return (
     <section className="secondary-page import-page">
-      <div className="page-title-row"><div><h1>本地导入</h1><p>仅扫描 Claude、Gemini、OpenCode 和 Hermes</p></div><button className="ghost-button" onClick={onRefresh} disabled={loading}>↻ 重新扫描</button></div>
+      <div className="page-title-row"><div><h1>本地导入</h1><p>{scanLabels.length ? `仅扫描 ${scanLabels.join("、")}` : "未启用可扫描应用"}</p></div><button className="ghost-button" onClick={onRefresh} disabled={loading}>↻ 重新扫描</button></div>
       <div className="notice-card">导入后内容归一到 <code>~/.agents/skills/</code>，原位置替换为软连接，并保留可恢复备份。</div>
       <div className="card-list">
         {candidates.map((candidate) => {
@@ -33,7 +35,7 @@ export function ImportPage({ candidates, loading, busyKey, onRefresh, onImport }
             </article>
           );
         })}
-        {!loading && !candidates.length && <div className="empty-state"><strong>没有待导入 Skill</strong><span>已知应用目录均已归一化</span></div>}
+        {!loading && !candidates.length && <div className="empty-state"><strong>没有待导入 Skill</strong><span>{scanLabels.length ? "已知应用目录均已归一化" : "在设置中启用对应应用"}</span></div>}
       </div>
     </section>
   );

@@ -188,6 +188,18 @@ button:disabled { opacity: .48; cursor: default; }
 .import-page .diff-list, .import-page .inline-error { flex-basis: 100%; width: 100%; }
 .data-card.compact code { display: block; margin-top: 10px; color: var(--muted); font-size: var(--font-secondary); }
 .settings-page { max-width: 900px; }
+.support-settings-card { padding: 11px 12px; }
+.settings-section-title { margin: 0 0 6px; color: var(--text); font-size: var(--font-secondary); }
+.app-support-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 4px 12px; }
+.app-support-toggle { display: flex; align-items: center; width: 100%; min-height: 40px; padding: 5px 7px; border: 0; border-radius: 7px; background: transparent; color: var(--text-2); text-align: left; cursor: pointer; }
+.app-support-toggle:hover { background: var(--hover); }
+.app-support-icon { display: grid; flex: none; place-items: center; width: 24px; height: 24px; margin-right: 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--muted); }
+.app-support-icon svg { display: block; width: 14px; height: 14px; fill: currentColor; }
+.app-support-name { min-width: 0; flex: 1; font-size: var(--font-secondary); font-weight: 600; }
+.support-switch { position: relative; flex: none; width: 30px; height: 18px; border-radius: 999px; background: var(--switch-off); transition: background-color 150ms ease; }
+.support-switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--on-accent); box-shadow: 0 1px 2px var(--line); transition: transform 150ms ease; }
+.app-support-toggle[aria-checked="true"] .support-switch { background: var(--accent); }
+.app-support-toggle[aria-checked="true"] .support-switch::after { transform: translateX(12px); }
 .path-setting { display: grid; grid-template-columns: 105px minmax(200px, 1fr) auto; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--line-soft); }
 .path-setting:last-child { border-bottom: 0; }
 .path-setting strong, .path-setting small { display: block; }

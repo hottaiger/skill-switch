@@ -199,7 +199,7 @@ pub fn scan_import_candidates(
     settings: &Settings,
 ) -> Result<Vec<ImportCandidate>, CommandError> {
     let mut candidates = Vec::new();
-    for app in AppKind::MANAGED {
+    for app in AppKind::MANAGED.into_iter().filter(|app| settings.app_support.is_enabled(*app)) {
         let root = app_root(home, app, settings);
         let entries = match fs::read_dir(&root) {
             Ok(entries) => entries,
@@ -255,6 +255,9 @@ pub fn import_candidate(
     settings: &Settings,
     request: ImportRequest,
 ) -> Result<ImportResult, CommandError> {
+    if !request.app.is_native_ssot() && !settings.app_support.is_enabled(request.app) {
+        return Err(CommandError::new(ErrorCode::InvalidPath, "应用未启用"));
+    }
     let current = candidate(home, settings, request.app, request.name.clone());
     if current.status == ImportStatus::Invalid {
         return Err(current

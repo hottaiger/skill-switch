@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { APP_LABELS, MANAGED_APPS, type AppKind, type LibraryView, type SkillFilter, type SkillRecord } from "../types";
+import { APP_LABELS, MANAGED_APPS, type AppKind, type AppSupport, type LibraryView, type SkillFilter, type SkillRecord } from "../types";
 import { AppIcon } from "./AppIcon";
 
 interface SkillLibraryProps {
@@ -8,6 +8,7 @@ interface SkillLibraryProps {
   search: string;
   filter: SkillFilter;
   appFilter?: AppKind;
+  appSupport: AppSupport;
   view: LibraryView;
   loading: boolean;
   onSearch: (value: string) => void;
@@ -19,17 +20,18 @@ interface SkillLibraryProps {
   onClearAppFilter: () => void;
 }
 
-function managedEnabled(skill: SkillRecord) {
-  return skill.visibility.some((state) => MANAGED_APPS.includes(state.app) && state.enabled);
+function managedEnabled(skill: SkillRecord, appSupport: AppSupport) {
+  return skill.visibility.some((state) => MANAGED_APPS.includes(state.app) && appSupport[state.app] && state.enabled);
 }
 
-function visibilitySummary(skill: SkillRecord) {
-  const count = skill.visibility.filter((state) => MANAGED_APPS.includes(state.app) && state.enabled).length;
-  return count ? `${count}/4 已启用` : "未启用";
+function visibilitySummary(skill: SkillRecord, appSupport: AppSupport) {
+  const available = MANAGED_APPS.filter((app) => appSupport[app]);
+  const count = skill.visibility.filter((state) => available.includes(state.app) && state.enabled).length;
+  return count ? `${count}/${available.length} 已启用` : "未启用";
 }
 
-function supportedApps(skill: SkillRecord) {
-  return skill.visibility.filter((state) => state.enabled).map((state) => state.app);
+function supportedApps(skill: SkillRecord, appSupport: AppSupport) {
+  return skill.visibility.filter((state) => appSupport[state.app] && state.enabled).map((state) => state.app);
 }
 
 export function SkillLibrary({
@@ -38,6 +40,7 @@ export function SkillLibrary({
   search,
   filter,
   appFilter,
+  appSupport,
   view,
   loading,
   onSearch,
@@ -53,7 +56,7 @@ export function SkillLibrary({
   const visible = skills.filter((skill) => {
     const matchesSearch = !needle || skill.name.toLocaleLowerCase().includes(needle)
       || (skill.description || "").toLocaleLowerCase().includes(needle);
-    const enabled = managedEnabled(skill);
+    const enabled = managedEnabled(skill, appSupport);
     const matchesFilter = filter === "all" || (filter === "enabled" ? enabled : !enabled);
     const matchesApp = !appFilter || skill.visibility.some((state) => state.app === appFilter && state.enabled);
     return matchesSearch && matchesFilter && matchesApp;
@@ -125,11 +128,11 @@ export function SkillLibrary({
             >
               {view === "list" ? <>
                 <span className="skill-copy"><strong>{skill.name}</strong><small>{skill.description || "暂无描述"}</small></span>
-                <span className={`visibility-summary ${managedEnabled(skill) ? "" : "disabled"}`}>{visibilitySummary(skill)}</span>
+                <span className={`visibility-summary ${managedEnabled(skill, appSupport) ? "" : "disabled"}`}>{visibilitySummary(skill, appSupport)}</span>
               </> : <>
                 <strong className="skill-card-name">{skill.name}</strong>
                 <span className="skill-card-apps" aria-label="支持的应用">
-                  {supportedApps(skill).map((app) => <span className="skill-card-app" key={app} title={APP_LABELS[app]}><AppIcon app={app} /></span>)}
+                  {supportedApps(skill, appSupport).map((app) => <span className="skill-card-app" key={app} title={APP_LABELS[app]}><AppIcon app={app} /></span>)}
                 </span>
               </>}
             </button>

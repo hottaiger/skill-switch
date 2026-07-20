@@ -1,10 +1,11 @@
-import { ALL_APPS, APP_LABELS, type AppKind, type Section } from "../types";
+import { ALL_APPS, APP_LABELS, type AppKind, type AppSupport, type Section } from "../types";
 import { AppIcon } from "./AppIcon";
 
 interface SidebarProps {
   section: Section;
   skillCount: number;
   appFilter?: AppKind;
+  appSupport: AppSupport;
   onSectionChange: (section: Section) => void;
   onAppFilter: (app: AppKind) => void;
 }
@@ -19,6 +20,7 @@ export function Sidebar({
   section,
   skillCount,
   appFilter,
+  appSupport,
   onSectionChange,
   onAppFilter,
 }: SidebarProps) {
@@ -40,7 +42,7 @@ export function Sidebar({
       </nav>
       <div className="nav-group-label">应用</div>
       <nav aria-label="应用筛选">
-        {ALL_APPS.map((app) => (
+        {ALL_APPS.filter((app) => appSupport[app]).map((app) => (
           <button
             key={app}
             className={`nav-item ${section === "library" && appFilter === app ? "active" : ""}`}

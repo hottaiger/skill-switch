@@ -91,6 +91,9 @@ mod tests {
             br#"{"schemaVersion":1,"appPaths":{},"lastSection":"library","skillFilter":"all"}"#,
         )
         .unwrap();
-        assert_eq!(load_settings(home.path()).unwrap().settings.library_view, "list");
+        let settings = load_settings(home.path()).unwrap().settings;
+        assert_eq!(settings.library_view, "list");
+        assert!(settings.app_support.claude);
+        assert!(settings.app_support.cursor);
     }
 }

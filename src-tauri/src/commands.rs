@@ -163,6 +163,15 @@ pub fn update_app_path(
 }
 
 #[tauri::command]
+pub fn set_app_support(app: AppKind, enabled: bool) -> Result<SettingsSnapshot, CommandError> {
+    let home = current_home()?;
+    let (mut settings, _) = loaded_settings(&home)?;
+    settings.app_support.set_enabled(app, enabled);
+    save_settings(&home, &settings)?;
+    Ok(settings_snapshot(&home, settings, None))
+}
+
+#[tauri::command]
 pub fn update_ui_preferences(
     last_section: String,
     skill_filter: String,

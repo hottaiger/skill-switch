@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   restoreBackup: vi.fn(),
   getSettings: vi.fn(),
   updateAppPath: vi.fn(),
+  setAppSupport: vi.fn(),
   updateUiPreferences: vi.fn(),
 }));
 
@@ -59,7 +60,14 @@ const snapshot: ScanSnapshot = {
 };
 
 const settings: SettingsSnapshot = {
-  settings: { schemaVersion: 1, appPaths: {}, lastSection: "library", skillFilter: "all", libraryView: "list" },
+  settings: {
+    schemaVersion: 1,
+    appPaths: {},
+    appSupport: { claude: true, gemini: true, openCode: true, hermes: true, codex: true, cursor: true },
+    lastSection: "library",
+    skillFilter: "all",
+    libraryView: "list",
+  },
   paths: {
     claude: "/Users/test/.claude/skills",
     gemini: "/Users/test/.gemini/skills",
@@ -77,6 +85,7 @@ beforeEach(() => {
   mocks.scanImportCandidates.mockResolvedValue([]);
   mocks.listBackups.mockResolvedValue([]);
   mocks.updateUiPreferences.mockResolvedValue(settings);
+  mocks.setAppSupport.mockResolvedValue(settings);
 });
 
 afterEach(cleanup);
@@ -99,6 +108,19 @@ it("shows Codex and Cursor in the app filter list", async () => {
   render(<App />);
   expect(await screen.findByRole("button", { name: "Codex" })).toBeVisible();
   expect(screen.getByRole("button", { name: "Cursor" })).toBeVisible();
+});
+
+it("updates supported apps and hides a disabled app from navigation", async () => {
+  const user = userEvent.setup();
+  mocks.setAppSupport.mockResolvedValue({
+    ...settings,
+    settings: { ...settings.settings, appSupport: { ...settings.settings.appSupport, claude: false } },
+  });
+  render(<App />);
+  await user.click(await screen.findByRole("button", { name: /设置/ }));
+  await user.click(screen.getByRole("switch", { name: "Claude" }));
+  await waitFor(() => expect(mocks.setAppSupport).toHaveBeenCalledWith("claude", false));
+  expect(screen.queryByRole("button", { name: "Claude" })).not.toBeInTheDocument();
 });
 
 it("switches to cards while preserving filtering and persists the choice", async () => {
@@ -152,7 +174,7 @@ it("opens known-directory import without repository discovery", async () => {
   render(<App />);
   await user.click(await screen.findByRole("button", { name: /本地导入/ }));
   expect(await screen.findByRole("heading", { name: "本地导入" })).toBeVisible();
-  expect(screen.getByText("仅扫描 Claude、Gemini、OpenCode 和 Hermes")).toBeVisible();
+  expect(screen.getByText("仅扫描 Claude、Gemini、OpenCode、Hermes")).toBeVisible();
   expect(mocks.scanImportCandidates).toHaveBeenCalled();
 });
 

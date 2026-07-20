@@ -41,9 +41,12 @@ export interface AppPathOverrides {
   hermes?: string;
 }
 
+export type AppSupport = Record<AppKind, boolean>;
+
 export interface Settings {
   schemaVersion: number;
   appPaths: AppPathOverrides;
+  appSupport: AppSupport;
   lastSection: Section;
   skillFilter: SkillFilter;
   libraryView: LibraryView;

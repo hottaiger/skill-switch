@@ -52,6 +52,9 @@ pub fn derive_visibility(
     skill_name: &str,
     app: AppKind,
 ) -> Result<VisibilityState, CommandError> {
+    if !settings.app_support.is_enabled(app) {
+        return Err(CommandError::new(ErrorCode::InvalidPath, "应用未启用"));
+    }
     let source = source_path(home, skill_name)?;
     if app.is_native_ssot() {
         return Ok(VisibilityState {
@@ -98,6 +101,9 @@ pub fn set_visibility(
     app: AppKind,
     enabled: bool,
 ) -> Result<VisibilityState, CommandError> {
+    if !settings.app_support.is_enabled(app) {
+        return Err(CommandError::new(ErrorCode::InvalidPath, "应用未启用"));
+    }
     if app.is_native_ssot() {
         return Err(CommandError::new(
             ErrorCode::InvalidPath,
@@ -163,6 +169,7 @@ pub fn populate_visibility(home: &Path, settings: &Settings, snapshot: &mut Scan
     for skill in &mut snapshot.skills {
         skill.visibility = AppKind::ALL
             .into_iter()
+            .filter(|app| settings.app_support.is_enabled(*app))
             .filter_map(|app| derive_visibility(home, settings, &skill.name, app).ok())
             .collect();
     }
@@ -235,6 +242,19 @@ mod tests {
             false,
         )
         .unwrap();
+    }
+
+    #[test]
+    fn disabled_app_rejects_visibility_changes() {
+        let mut fixture = Fixture::new();
+        fixture.settings.app_support.claude = false;
+        fixture.make_skill("alpha");
+        assert_eq!(
+            set_visibility(fixture.home.path(), &fixture.settings, "alpha", AppKind::Claude, true)
+                .unwrap_err()
+                .code,
+            ErrorCode::InvalidPath
+        );
     }
 
     #[test]

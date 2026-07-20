@@ -1,8 +1,9 @@
-import { ALL_APPS, APP_LABELS, type AppKind, type SkillRecord } from "../types";
+import { ALL_APPS, APP_LABELS, type AppKind, type AppSupport, type SkillRecord } from "../types";
 
 interface SkillInspectorProps {
   skill?: SkillRecord;
   busyKey?: string;
+  appSupport: AppSupport;
   onClose: () => void;
   onToggle: (app: AppKind, enabled: boolean) => void;
   onUninstall: () => void;
@@ -12,7 +13,7 @@ function formatSize(bytes: number) {
   return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
 }
 
-export function SkillInspector({ skill, busyKey, onClose, onToggle, onUninstall }: SkillInspectorProps) {
+export function SkillInspector({ skill, busyKey, appSupport, onClose, onToggle, onUninstall }: SkillInspectorProps) {
   if (!skill) return null;
   return (
     <aside className="inspector" role="dialog" aria-label="Skill 详情">
@@ -22,7 +23,7 @@ export function SkillInspector({ skill, busyKey, onClose, onToggle, onUninstall 
       <div className="description">{skill.description || "该 Skill 未提供 description。"}</div>
       <h3>应用可见性</h3>
       <div className="visibility-list">
-        {ALL_APPS.map((app) => {
+        {ALL_APPS.filter((app) => appSupport[app]).map((app) => {
           const state = skill.visibility.find((item) => item.app === app);
           const native = app === "codex" || app === "cursor";
           const busy = busyKey === `${skill.name}:${app}`;
