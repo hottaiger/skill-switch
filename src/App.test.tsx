@@ -208,6 +208,29 @@ it("requires an explicit decision for different-content imports", async () => {
   ]));
 });
 
+it("explains conflicting import decisions inline", async () => {
+  const user = userEvent.setup();
+  mocks.scanImportCandidates.mockResolvedValue([{
+    app: "gemini",
+    name: "conflicted-skill",
+    sourcePath: "/Users/test/.gemini/skills/conflicted-skill",
+    sourceModifiedAtMs: 2,
+    status: "conflict",
+    sourceHash: "source",
+    ssotHash: "ssot",
+    differences: ["内容不同：SKILL.md"],
+  }]);
+  render(<App />);
+  await user.click(await screen.findByRole("button", { name: /本地导入/ }));
+  await user.click(await screen.findByLabelText("查看选项区别"));
+  const helpPanel = screen.getByText("两个选项的区别").closest(".decision-help-panel") as HTMLElement;
+  expect(helpPanel).toBeVisible();
+  expect(within(helpPanel).getByText("保留统一版本")).toBeVisible();
+  expect(within(helpPanel).getByText(/当前版本，把来源目录替换成软链接/)).toBeVisible();
+  expect(within(helpPanel).getByText(/用来源目录版本覆盖统一库/)).toBeVisible();
+  expect(within(helpPanel).getByText("两者都会保留可恢复备份。")).toBeVisible();
+});
+
 it("lists and restores verified backups", async () => {
   const user = userEvent.setup();
   const backup = { id: "alpha/1", skillName: "alpha", createdAtMs: 1, operation: "uninstall" as const, path: "/backup/alpha/1" };

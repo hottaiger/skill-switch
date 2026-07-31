@@ -177,6 +177,17 @@ button:disabled { opacity: .48; cursor: default; }
 .status { padding: 5px 8px; border-radius: 999px; background: var(--hover); color: var(--text-2); font-size: var(--font-secondary); }
 .status.ready, .status.identical { color: var(--success); background: var(--success-bg); }
 .status.conflict, .status.invalid { color: var(--danger); background: var(--danger-bg); }
+.status-help { position: relative; display: flex; flex: none; align-items: center; gap: 6px; }
+.decision-help { position: relative; }
+.decision-help summary { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 7px; color: var(--muted); list-style: none; cursor: pointer; }
+.decision-help summary::-webkit-details-marker { display: none; }
+.decision-help summary::before { content: "?"; display: grid; place-items: center; width: 22px; height: 22px; border: 1px solid var(--line); border-radius: 50%; background: var(--panel); color: currentColor; font-size: var(--font-secondary); font-weight: 700; }
+.decision-help summary:hover { background: var(--hover); color: var(--text-2); }
+.decision-help[open] summary::before { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 2px var(--accent-ring); }
+.decision-help-panel { position: absolute; top: 34px; right: 0; z-index: 4; width: min(320px, calc(100vw - 230px)); padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); box-shadow: var(--shadow); color: var(--text-2); font-size: var(--font-secondary); line-height: 1.5; }
+.decision-help-panel strong { display: block; margin-bottom: 7px; color: var(--text); font-size: var(--font-secondary); }
+.decision-help-panel p { margin: 6px 0 0; }
+.decision-help-panel code { color: var(--text); }
 .diff-list { margin: 14px 0 0; padding: 11px 11px 11px 28px; border-radius: 7px; background: var(--panel-soft); color: var(--text-2); font-size: var(--font-secondary); }
 .inline-error, .error-banner { color: var(--danger); font-size: var(--font-secondary); }
 .card-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }

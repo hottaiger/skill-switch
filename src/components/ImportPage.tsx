@@ -15,6 +15,24 @@ function formatModifiedAt(value: number) {
 
 export function ImportPage({ candidates, loading, busyKey, appSupport, onRefresh, onImport }: ImportPageProps) {
   const scanLabels = MANAGED_APPS.filter((app) => appSupport[app]).map((app) => APP_LABELS[app]);
+  const renderStatus = (candidate: ImportCandidate) => {
+    const label = candidate.status === "ready" ? "可导入" : candidate.status === "identical" ? "内容相同" : candidate.status === "conflict" ? "需要选择" : "无效";
+    if (candidate.status !== "conflict") return <span className={`status ${candidate.status}`}>{label}</span>;
+    return (
+      <div className="status-help">
+        <span className={`status ${candidate.status}`}>{label}</span>
+        <details className="decision-help">
+          <summary aria-label="查看选项区别" />
+          <div className="decision-help-panel">
+            <strong>两个选项的区别</strong>
+            <p><b>保留统一版本</b>：保留 <code>~/.agents/skills/</code> 当前版本，把来源目录替换成软链接。</p>
+            <p><b>使用导入版本</b>：用来源目录版本覆盖统一库，再把来源目录替换成软链接。</p>
+            <p>两者都会保留可恢复备份。</p>
+          </div>
+        </details>
+      </div>
+    );
+  };
   return (
     <section className="secondary-page import-page">
       <div className="page-title-row"><div><h1>本地导入</h1><p>{scanLabels.length ? `仅扫描 ${scanLabels.join("、")}` : "未启用可扫描应用"}</p></div><button className="ghost-button" onClick={onRefresh} disabled={loading}>↻ 重新扫描</button></div>
@@ -24,7 +42,7 @@ export function ImportPage({ candidates, loading, busyKey, appSupport, onRefresh
           const key = `${candidate.app}:${candidate.name}`;
           return (
             <article className="data-card" key={key}>
-              <div className="card-heading"><div><strong>{candidate.name}</strong><small>{APP_LABELS[candidate.app]} · {candidate.sourcePath}</small><small>修改时间：{formatModifiedAt(candidate.sourceModifiedAtMs)}</small></div><span className={`status ${candidate.status}`}>{candidate.status === "ready" ? "可导入" : candidate.status === "identical" ? "内容相同" : candidate.status === "conflict" ? "需要选择" : "无效"}</span></div>
+              <div className="card-heading"><div><strong>{candidate.name}</strong><small>{APP_LABELS[candidate.app]} · {candidate.sourcePath}</small><small>修改时间：{formatModifiedAt(candidate.sourceModifiedAtMs)}</small></div>{renderStatus(candidate)}</div>
               {candidate.differences.length > 0 && <ul className="diff-list">{candidate.differences.map((item) => <li key={item}>{item}</li>)}</ul>}
               {candidate.error && <p className="inline-error">{candidate.error.message}</p>}
               <div className="card-actions">
