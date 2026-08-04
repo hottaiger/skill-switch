@@ -127,6 +127,10 @@ fn is_managed_link(source: &Path, ssot: &Path) -> bool {
     matches!((target.canonicalize(), ssot.canonicalize()), (Ok(left), Ok(right)) if left == right)
 }
 
+fn is_hidden_or_system_entry(name: &str) -> bool {
+    name.starts_with('.') || name == "__MACOSX"
+}
+
 fn candidate(home: &Path, settings: &Settings, app: AppKind, name: String) -> ImportCandidate {
     let root = app_root(home, app, settings);
     let source = root.join(&name);
@@ -199,7 +203,10 @@ pub fn scan_import_candidates(
     settings: &Settings,
 ) -> Result<Vec<ImportCandidate>, CommandError> {
     let mut candidates = Vec::new();
-    for app in AppKind::MANAGED.into_iter().filter(|app| settings.app_support.is_enabled(*app)) {
+    for app in AppKind::MANAGED
+        .into_iter()
+        .filter(|app| settings.app_support.is_enabled(*app))
+    {
         let root = app_root(home, app, settings);
         let entries = match fs::read_dir(&root) {
             Ok(entries) => entries,
@@ -211,6 +218,9 @@ pub fn scan_import_candidates(
                 CommandError::new(ErrorCode::Io, "读取导入候选失败").with_detail(error.to_string())
             })?;
             let name = entry.file_name().to_string_lossy().into_owned();
+            if is_hidden_or_system_entry(&name) {
+                continue;
+            }
             let destination = ssot_dir(home).join(&name);
             if is_managed_link(&entry.path(), &destination) {
                 continue;
@@ -539,5 +549,24 @@ mod tests {
             .remove(0);
         assert_eq!(candidate.status, ImportStatus::Invalid);
         assert_eq!(candidate.error.unwrap().code, ErrorCode::InvalidSkill);
+    }
+
+    #[test]
+    fn known_directory_scan_ignores_hidden_and_macos_metadata_entries() {
+        let home = tempfile::tempdir().unwrap();
+        let settings = Settings::default();
+        let root = app_root(home.path(), AppKind::Claude, &settings);
+        fs::create_dir_all(&root).unwrap();
+        fs::write(root.join(".DS_Store"), "metadata").unwrap();
+        fs::create_dir_all(root.join(".hidden-skill")).unwrap();
+        fs::write(root.join(".hidden-skill/SKILL.md"), "hidden").unwrap();
+        fs::create_dir_all(root.join("__MACOSX")).unwrap();
+        make_skill(&root, "visible-skill", "visible");
+
+        let candidates = scan_import_candidates(home.path(), &settings).unwrap();
+
+        assert_eq!(candidates.len(), 1);
+        assert_eq!(candidates[0].name, "visible-skill");
+        assert_eq!(candidates[0].status, ImportStatus::Ready);
     }
 }
