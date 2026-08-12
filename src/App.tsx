@@ -224,6 +224,16 @@ export default function App() {
     } finally { setBusyKey(undefined); }
   };
 
+  const createCustomCategoryFromSettings = async (name: string) => {
+    const key = "custom-category:create";
+    setBusyKey(key); setMessage(undefined);
+    try {
+      setSettings(await api.createCustomCategory(name));
+    } catch (error) {
+      setMessage({ type: "error", text: errorMessage(error) });
+    } finally { setBusyKey(undefined); }
+  };
+
   const renameCustomCategory = async (previousName: string, nextName: string) => {
     const key = `custom-category:${previousName}`;
     setBusyKey(key); setMessage(undefined);
@@ -295,7 +305,7 @@ export default function App() {
         {section === "library" && <SkillLibrary skills={snapshot?.skills || []} selectedName={selectedName} search={search} appFilter={appFilter} appSupport={appSupport} view={libraryView} loading={loading} groupByCategory={groupByCategory} onSearch={setSearch} onViewChange={changeLibraryView} onToggleGroup={() => setGroupByCategory((value) => !value)} onSelect={setSelectedName} onRefresh={() => void refreshSkills()} onImport={() => changeSection("import")} onClearAppFilter={() => setAppFilter(undefined)} onOpenWith={openSkillWith} />}
         {section === "import" && <ImportPage candidates={candidates} loading={loading} busyKey={busyKey} appSupport={appSupport} onRefresh={() => void refreshImports()} onImport={(candidate, decision) => void runImport(candidate, decision)} />}
         {section === "backups" && <BackupPage backups={backups} loading={loading} busyKey={busyKey} onRefresh={() => void refreshBackups()} onRestore={(backup) => void restore(backup)} onPermanentDelete={(backup) => void permanentDelete(backup)} onOpenWith={(backupId, opener) => void openBackupWith(backupId, opener)} />}
-        {section === "settings" && <SettingsPage snapshot={settings} skills={snapshot} busyKey={busyKey} onSave={(app, path) => void savePath(app, path)} onToggleSupport={(app, enabled) => void toggleAppSupport(app, enabled)} onRenameCustomCategory={(previousName, nextName) => void renameCustomCategory(previousName, nextName)} onDeleteCustomCategory={(name) => void deleteCustomCategory(name)} />}
+        {section === "settings" && <SettingsPage snapshot={settings} skills={snapshot} busyKey={busyKey} onSave={(app, path) => void savePath(app, path)} onToggleSupport={(app, enabled) => void toggleAppSupport(app, enabled)} onCreateCustomCategory={(name) => void createCustomCategoryFromSettings(name)} onRenameCustomCategory={(previousName, nextName) => void renameCustomCategory(previousName, nextName)} onDeleteCustomCategory={(name) => void deleteCustomCategory(name)} />}
       </main>
       {section === "library" && selectedSkill && <>
         <button className="inspector-backdrop" aria-label="关闭详情遮罩" onClick={() => setSelectedName(undefined)} />
