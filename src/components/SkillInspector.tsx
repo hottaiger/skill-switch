@@ -1,17 +1,41 @@
 import { useEffect, useState } from "react";
 import { ALL_APPS, APP_LABELS, isNativeApp, type AppKind, type AppSupport, type SkillRecord } from "../types";
 
-const BUILT_IN_CATEGORIES = ["Matt Pocock", "Comet", "GitNexus", "Obsidian", "Obsidian Visual Skills Pack", "superpowers", "openspec"];
+const CATEGORY_SOURCES = {
+  "Matt Pocock": {
+    label: "Matt Pocock skills",
+    url: "https://github.com/mattpocock/skills/tree/main/skills",
+  },
+  Comet: {
+    label: "rpamis/comet · assets/skills-zh",
+    url: "https://github.com/rpamis/comet/tree/master/assets/skills-zh",
+  },
+  GitNexus: {
+    label: "abhigyanpatwari/GitNexus v1.6.9 · gitnexus/skills",
+    url: "https://github.com/abhigyanpatwari/GitNexus/tree/v1.6.9/gitnexus/skills",
+  },
+  Obsidian: {
+    label: "kepano/obsidian-skills · skills",
+    url: "https://github.com/kepano/obsidian-skills/tree/main/skills",
+  },
+  "Obsidian Visual Skills Pack": {
+    label: "axtonliu/axton-obsidian-visual-skills",
+    url: "https://github.com/axtonliu/axton-obsidian-visual-skills/tree/main",
+  },
+  superpowers: {
+    label: "obra/superpowers · skills",
+    url: "https://github.com/obra/superpowers/tree/main/skills",
+  },
+  openspec: {
+    label: "Fission-AI/OpenSpec · skills",
+    url: "https://github.com/Fission-AI/OpenSpec/tree/main/skills",
+  },
+} as const;
 
-function categoryRule(category: string) {
-  if (category === "Matt Pocock") return "Matt Pocock skills";
-  if (category === "Comet") return "rpamis/comet · assets/skills-zh";
-  if (category === "GitNexus") return "abhigyanpatwari/GitNexus v1.6.9 · gitnexus/skills";
-  if (category === "Obsidian") return "kepano/obsidian-skills · skills";
-  if (category === "Obsidian Visual Skills Pack") return "axtonliu/axton-obsidian-visual-skills";
-  if (category === "superpowers") return "obra/superpowers";
-  if (category === "openspec") return "Fission-AI/OpenSpec";
-  return "未命中内置来源规则";
+const BUILT_IN_CATEGORIES = Object.keys(CATEGORY_SOURCES);
+
+function categorySource(category: string) {
+  return CATEGORY_SOURCES[category as keyof typeof CATEGORY_SOURCES];
 }
 
 function categorySelection(category: string, source: SkillRecord["categorySource"]) {
@@ -53,6 +77,7 @@ export function SkillInspector({ skill, busyKey, appSupport, onClose, onToggle, 
   const uninstalling = busyKey === `${skill.name}:uninstall`;
   const savingCategory = busyKey === `${skill.name}:category`;
   const draft = categoryDraft;
+  const source = skill.categorySource === "auto" ? categorySource(skill.category) : undefined;
   return (
     <aside className="inspector" role="dialog" aria-label="Skill 详情">
       <div className="inspector-topbar"><span className="eyebrow">SKILL 详情</span><button className="inspector-close" aria-label="关闭详情" onClick={onClose}>×</button></div>
@@ -102,7 +127,11 @@ export function SkillInspector({ skill, busyKey, appSupport, onClose, onToggle, 
             </button>
           )}
         </div>
-        <small>{skill.categorySource === "manual" ? "手动分类，优先于自动识别。" : `自动识别：${categoryRule(skill.category)}。`}</small>
+        <small>
+          {skill.categorySource === "manual" ? "手动分类，优先于自动识别。" : source ? <>
+            自动识别：{source.label}。来源：<a className="category-source-link" href={source.url} target="_blank" rel="noreferrer">{source.url.replace("https://", "")}</a>
+          </> : "自动识别：未命中内置来源规则。"}
+        </small>
       </label>
       <div className="description">{skill.description || "该 Skill 未提供 description。"}</div>
       <h3>应用可见性</h3>

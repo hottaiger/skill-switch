@@ -334,6 +334,14 @@ it("groups skills by category by default and can toggle off", async () => {
   expect(document.querySelectorAll(".skill-group-header")).toHaveLength(0);
 });
 
+it("shows a GitHub source link for automatically classified skills", async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await user.click(await screen.findByRole("option", { name: "implement" }));
+  expect(screen.getByRole("link", { name: "github.com/mattpocock/skills/tree/main/skills" }))
+    .toHaveAttribute("href", "https://github.com/mattpocock/skills/tree/main/skills");
+});
+
 it("saves a manual category override from the inspector", async () => {
   const user = userEvent.setup();
   mocks.setSkillCategory.mockResolvedValue(snapshot);

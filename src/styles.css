@@ -148,6 +148,7 @@ button:disabled { opacity: .48; cursor: default; }
 .category-edit input, .category-edit select { flex: 1; min-width: 0; min-height: 32px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); color: var(--text); font-size: var(--font-body); font-family: inherit; }
 .category-edit input:focus, .category-edit select:focus { outline: 0; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-ring); }
 .category-edit small { display: block; margin-top: 5px; color: var(--muted); font-size: var(--font-secondary); }
+.category-source-link { color: var(--accent); overflow-wrap: anywhere; }
 
 .open-with { position: relative; flex: none; }
 .open-with-trigger { display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer; transition: background-color 120ms ease, color 120ms ease; }
