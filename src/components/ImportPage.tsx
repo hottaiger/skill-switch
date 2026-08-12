@@ -1,0 +1,60 @@
+import { APP_LABELS, MANAGED_APPS, type AppSupport, type ImportCandidate, type ImportDecision } from "../types";
+
+interface ImportPageProps {
+  candidates: ImportCandidate[];
+  loading: boolean;
+  busyKey?: string;
+  appSupport: AppSupport;
+  onRefresh: () => void;
+  onImport: (candidate: ImportCandidate, decision: ImportDecision) => void;
+}
+
+function formatModifiedAt(value: number) {
+  return value ? new Date(value).toLocaleString("zh-CN") : "未知";
+}
+
+export function ImportPage({ candidates, loading, busyKey, appSupport, onRefresh, onImport }: ImportPageProps) {
+  const scanLabels = MANAGED_APPS.filter((app) => appSupport[app]).map((app) => APP_LABELS[app]);
+  const renderStatus = (candidate: ImportCandidate) => {
+    const label = candidate.status === "ready" ? "可导入" : candidate.status === "identical" ? "内容相同" : candidate.status === "conflict" ? "需要选择" : "无效";
+    if (candidate.status !== "conflict") return <span className={`status ${candidate.status}`}>{label}</span>;
+    return (
+      <div className="status-help">
+        <span className={`status ${candidate.status}`}>{label}</span>
+        <details className="decision-help">
+          <summary aria-label="查看选项区别" />
+          <div className="decision-help-panel">
+            <strong>两个选项的区别</strong>
+            <p><b>保留统一版本</b>：保留 <code>~/.agents/skills/</code> 当前版本，把来源目录替换成软链接。</p>
+            <p><b>使用导入版本</b>：用来源目录版本覆盖统一库，再把来源目录替换成软链接。</p>
+            <p>两者都会保留可恢复备份。</p>
+          </div>
+        </details>
+      </div>
+    );
+  };
+  return (
+    <section className="secondary-page import-page">
+      <div className="page-title-row"><div><h1>本地导入</h1><p>{scanLabels.length ? `仅扫描 ${scanLabels.join("、")}` : "未启用可扫描应用"}</p></div><button className="ghost-button" onClick={onRefresh} disabled={loading}>↻ 重新扫描</button></div>
+      <div className="notice-card">导入后内容归一到 <code>~/.agents/skills/</code>，原位置替换为软连接，并保留可恢复备份。</div>
+      <div className="card-list">
+        {candidates.map((candidate) => {
+          const key = `${candidate.app}:${candidate.name}`;
+          return (
+            <article className="data-card" key={key}>
+              <div className="card-heading"><div><strong>{candidate.name}</strong><small>{APP_LABELS[candidate.app]} · {candidate.sourcePath}</small><small>修改时间：{formatModifiedAt(candidate.sourceModifiedAtMs)}</small></div>{renderStatus(candidate)}</div>
+              {candidate.differences.length > 0 && <ul className="diff-list">{candidate.differences.map((item) => <li key={item}>{item}</li>)}</ul>}
+              {candidate.error && <p className="inline-error">{candidate.error.message}</p>}
+              <div className="card-actions">
+                {candidate.status === "ready" && <button className="primary-button" disabled={busyKey === key} onClick={() => onImport(candidate, "normalize")}>导入</button>}
+                {candidate.status === "identical" && <button className="primary-button" disabled={busyKey === key} onClick={() => onImport(candidate, "normalize")}>归一化为软连接</button>}
+                {candidate.status === "conflict" && <><button className="ghost-button" disabled={busyKey === key} onClick={() => onImport(candidate, "keepSsot")}>保留统一版本</button><button className="primary-button" disabled={busyKey === key} onClick={() => onImport(candidate, "useSource")}>使用导入版本</button></>}
+              </div>
+            </article>
+          );
+        })}
+        {!loading && !candidates.length && <div className="empty-state"><strong>没有待导入 Skill</strong><span>{scanLabels.length ? "已知应用目录均已归一化" : "在设置中启用对应应用"}</span></div>}
+      </div>
+    </section>
+  );
+}
