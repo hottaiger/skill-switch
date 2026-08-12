@@ -83,7 +83,23 @@ pub const MATT_POCOCK_PRODUCTIVITY_SKILLS: [&str; 7] = [
     "writing-for-agents",
 ];
 
+/// 来自 rpamis/comet 的 assets/skills-zh 目录。
+pub const COMET_SKILLS: [&str; 11] = [
+    "comet",
+    "comet-any",
+    "comet-archive",
+    "comet-build",
+    "comet-classic",
+    "comet-design",
+    "comet-hotfix",
+    "comet-native",
+    "comet-open",
+    "comet-tweak",
+    "comet-verify",
+];
+
 pub const MATT_POCOCK_CATEGORY: &str = "Matt Pocock";
+pub const COMET_CATEGORY: &str = "Comet";
 pub const SUPERPOWERS_CATEGORY: &str = "superpowers";
 pub const OPENSPEC_CATEGORY: &str = "openspec";
 pub const UNCATEGORIZED: &str = "未分类";
@@ -112,6 +128,9 @@ pub fn resolve_category(skill_name: &str, user_categories: &BTreeMap<String, Str
         || MATT_POCOCK_PRODUCTIVITY_SKILLS.contains(&skill_name)
     {
         return MATT_POCOCK_CATEGORY.into();
+    }
+    if COMET_SKILLS.contains(&skill_name) {
+        return COMET_CATEGORY.into();
     }
     UNCATEGORIZED.into()
 }
@@ -144,6 +163,11 @@ mod category_tests {
             resolve_category("handoff", &BTreeMap::new()),
             MATT_POCOCK_CATEGORY
         );
+    }
+
+    #[test]
+    fn comet_skills_use_the_comet_category() {
+        assert_eq!(resolve_category("comet-native", &BTreeMap::new()), "Comet");
     }
 
     #[test]
