@@ -99,12 +99,19 @@ pub struct AppPathOverrides {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AppSupport {
+    #[serde(default = "default_true")]
     pub claude: bool,
+    #[serde(default = "default_true")]
     pub gemini: bool,
+    #[serde(default = "default_true")]
     pub open_code: bool,
+    #[serde(default = "default_true")]
     pub hermes: bool,
+    #[serde(default = "default_true")]
     pub codex: bool,
+    #[serde(default = "default_true")]
     pub cursor: bool,
+    #[serde(default = "default_true")]
     pub zcode: bool,
 }
 
@@ -164,6 +171,10 @@ pub struct Settings {
 
 fn default_library_view() -> String {
     "list".into()
+}
+
+fn default_true() -> bool {
+    true
 }
 
 impl Default for Settings {

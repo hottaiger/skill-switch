@@ -97,4 +97,39 @@ mod tests {
         assert!(settings.app_support.cursor);
         assert!(settings.app_support.zcode);
     }
+
+    #[test]
+    fn legacy_app_support_defaults_missing_new_apps_without_warning() {
+        let home = tempfile::tempdir().unwrap();
+        fs::create_dir_all(home.path().join(".skill-switch")).unwrap();
+        fs::write(
+            home.path().join(".skill-switch/config.json"),
+            br#"{
+              "schemaVersion": 1,
+              "appPaths": {},
+              "appSupport": {
+                "claude": false,
+                "gemini": false,
+                "openCode": false,
+                "hermes": false,
+                "codex": true,
+                "cursor": true
+              },
+              "lastSection": "library",
+              "libraryView": "list"
+            }"#,
+        )
+        .unwrap();
+
+        let loaded = load_settings(home.path()).unwrap();
+
+        assert!(loaded.warning.is_none());
+        assert!(!loaded.settings.app_support.claude);
+        assert!(!loaded.settings.app_support.gemini);
+        assert!(!loaded.settings.app_support.open_code);
+        assert!(!loaded.settings.app_support.hermes);
+        assert!(loaded.settings.app_support.codex);
+        assert!(loaded.settings.app_support.cursor);
+        assert!(loaded.settings.app_support.zcode);
+    }
 }
