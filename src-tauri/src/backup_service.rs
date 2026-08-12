@@ -95,6 +95,7 @@ fn record(snapshot: &Path, metadata: &BackupMetadata) -> BackupRecord {
         created_at_ms: metadata.created_at_ms,
         operation: metadata.operation,
         path: snapshot.to_string_lossy().into_owned(),
+        reason: metadata.reason.clone(),
     }
 }
 
@@ -117,6 +118,7 @@ pub fn create_backup(
     operation: BackupOperation,
     original_path: &Path,
     visible_apps: Vec<AppKind>,
+    reason: Option<&str>,
 ) -> Result<BackupRecord, CommandError> {
     validate_skill_name(skill_name)?;
     let created_at_ms = now_ms();
@@ -147,6 +149,10 @@ pub fn create_backup(
         original_path: original_path.to_string_lossy().into_owned(),
         visible_apps,
         content_hash: source_hash,
+        reason: reason
+            .map(|value| value.trim())
+            .filter(|value| !value.is_empty())
+            .map(|value| value.to_string()),
     };
     let metadata_file = metadata_path(&temporary);
     let mut file = fs::File::create(&metadata_file)
@@ -235,6 +241,7 @@ pub fn uninstall_skill(
     home: &Path,
     settings: &Settings,
     skill_name: &str,
+    reason: &str,
 ) -> Result<BackupRecord, CommandError> {
     validate_skill_name(skill_name)?;
     let source = ssot_dir(home).join(skill_name);
@@ -253,6 +260,7 @@ pub fn uninstall_skill(
         BackupOperation::Uninstall,
         &source,
         visible_apps.clone(),
+        Some(reason),
     )?;
     for app in visible_apps {
         set_visibility(home, settings, skill_name, app, false)?;
@@ -305,6 +313,25 @@ pub fn restore_backup(
     Ok(result)
 }
 
+pub fn delete_backup(home: &Path, backup_id: &str) -> Result<(), CommandError> {
+    let snapshot = safe_snapshot(home, backup_id)?;
+    if !snapshot.exists() {
+        return Err(CommandError::new(ErrorCode::InvalidPath, "备份不存在").at_path(&snapshot));
+    }
+    fs::remove_dir_all(&snapshot)
+        .map_err(|error| CommandError::io("删除备份失败", &snapshot, &error))?;
+    Ok(())
+}
+
+pub fn backup_content_path(home: &Path, backup_id: &str) -> Result<PathBuf, CommandError> {
+    let snapshot = safe_snapshot(home, backup_id)?;
+    let content = snapshot.join("content");
+    if !content.is_dir() {
+        return Err(CommandError::new(ErrorCode::InvalidPath, "备份内容不存在").at_path(&content));
+    }
+    Ok(content)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -319,8 +346,8 @@ mod tests {
     #[test]
     fn sixth_verified_backup_removes_only_oldest_snapshot() {
         let home = tempfile::tempdir().unwrap();
-        let source = make_skill(home.path(), "alpha", "v1");
-        for _ in 0..6 {
+        for index in 0..6 {
+            let source = make_skill(home.path(), "alpha", &format!("v{index}"));
             create_backup(
                 home.path(),
                 "alpha",
@@ -328,6 +355,7 @@ mod tests {
                 BackupOperation::Import,
                 &source,
                 Vec::new(),
+                None,
             )
             .unwrap();
         }
@@ -344,7 +372,7 @@ mod tests {
         make_skill(home.path(), "alpha", "v1");
         let settings = Settings::default();
         set_visibility(home.path(), &settings, "alpha", AppKind::Claude, true).unwrap();
-        let backup = uninstall_skill(home.path(), &settings, "alpha").unwrap();
+        let backup = uninstall_skill(home.path(), &settings, "alpha", "").unwrap();
         assert!(!ssot_dir(home.path()).join("alpha").exists());
         assert!(list_backups(home.path())
             .unwrap()
@@ -364,6 +392,47 @@ mod tests {
     }
 
     #[test]
+    fn reinstall_after_restore_creates_independent_backup_with_reason() {
+        let home = tempfile::tempdir().unwrap();
+        make_skill(home.path(), "alpha", "v1");
+        let settings = Settings::default();
+        let first = uninstall_skill(home.path(), &settings, "alpha", "第一次卸载").unwrap();
+        restore_backup(home.path(), &settings, &first.id).unwrap();
+        // SSOT 现在又有了内容相同的 alpha；再次卸载应产生独立的新备份，各自带原因
+        let second = uninstall_skill(home.path(), &settings, "alpha", "第二次卸载").unwrap();
+        assert_ne!(first.id, second.id, "每次卸载应产生独立备份");
+        let backups = list_backups(home.path()).unwrap();
+        assert_eq!(backups.len(), 2);
+        let by_reason: Vec<_> = backups.iter().map(|b| b.reason.as_deref()).collect();
+        assert!(by_reason.contains(&Some("第一次卸载")));
+        assert!(by_reason.contains(&Some("第二次卸载")));
+    }
+
+    #[test]
+    fn delete_backup_removes_snapshot_and_rejects_invalid_id() {
+        let home = tempfile::tempdir().unwrap();
+        let source = make_skill(home.path(), "alpha", "v1");
+        let backup = create_backup(
+            home.path(),
+            "alpha",
+            &source,
+            BackupOperation::Uninstall,
+            &source,
+            Vec::new(),
+            Some("不再使用"),
+        )
+        .unwrap();
+        assert_eq!(backup.reason.as_deref(), Some("不再使用"));
+        delete_backup(home.path(), &backup.id).unwrap();
+        assert!(list_backups(home.path())
+            .unwrap()
+            .iter()
+            .all(|item| item.id != backup.id));
+        assert!(delete_backup(home.path(), &backup.id).is_err());
+        assert!(delete_backup(home.path(), "alpha/../../escape").is_err());
+    }
+
+    #[test]
     fn backup_rejects_external_symlinks_without_deleting_source() {
         let home = tempfile::tempdir().unwrap();
         let source = make_skill(home.path(), "alpha", "v1");
@@ -375,6 +444,7 @@ mod tests {
             BackupOperation::Uninstall,
             &source,
             Vec::new(),
+            None,
         )
         .unwrap_err();
         assert_eq!(error.code, ErrorCode::InvalidPath);

@@ -95,5 +95,6 @@ mod tests {
         assert_eq!(settings.library_view, "list");
         assert!(settings.app_support.claude);
         assert!(settings.app_support.cursor);
+        assert!(settings.app_support.zcode);
     }
 }

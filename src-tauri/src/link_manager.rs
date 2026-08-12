@@ -107,7 +107,7 @@ pub fn set_visibility(
     if app.is_native_ssot() {
         return Err(CommandError::new(
             ErrorCode::InvalidPath,
-            "Codex 和 Cursor 固定读取统一 Skill 目录",
+            "Codex、Cursor 和 Zcode 固定读取统一 Skill 目录",
         ));
     }
     let source = source_path(home, skill_name)?;
@@ -250,9 +250,15 @@ mod tests {
         fixture.settings.app_support.claude = false;
         fixture.make_skill("alpha");
         assert_eq!(
-            set_visibility(fixture.home.path(), &fixture.settings, "alpha", AppKind::Claude, true)
-                .unwrap_err()
-                .code,
+            set_visibility(
+                fixture.home.path(),
+                &fixture.settings,
+                "alpha",
+                AppKind::Claude,
+                true
+            )
+            .unwrap_err()
+            .code,
             ErrorCode::InvalidPath
         );
     }
@@ -309,7 +315,7 @@ mod tests {
     fn native_apps_are_always_auto_and_cannot_toggle() {
         let fixture = Fixture::new();
         fixture.make_skill("alpha");
-        for app in [AppKind::Codex, AppKind::Cursor] {
+        for app in [AppKind::Codex, AppKind::Cursor, AppKind::Zcode] {
             let state =
                 derive_visibility(fixture.home.path(), &fixture.settings, "alpha", app).unwrap();
             assert!(state.enabled);

@@ -4,7 +4,7 @@ import { vi } from "vitest";
 import App from "./App";
 import type { ScanSnapshot, SettingsSnapshot } from "./types";
 
-const mocks = vi.hoisted(() => ({
+  const mocks = vi.hoisted(() => ({
   scanSkills: vi.fn(),
   scanImportCandidates: vi.fn(),
   setSkillVisibility: vi.fn(),
@@ -13,10 +13,14 @@ const mocks = vi.hoisted(() => ({
   uninstallSkill: vi.fn(),
   listBackups: vi.fn(),
   restoreBackup: vi.fn(),
+  deleteBackup: vi.fn(),
   getSettings: vi.fn(),
   updateAppPath: vi.fn(),
   setAppSupport: vi.fn(),
   updateUiPreferences: vi.fn(),
+  openSkillWith: vi.fn(),
+  openBackupWith: vi.fn(),
+  setSkillCategory: vi.fn(),
 }));
 
 vi.mock("./api", () => ({ api: mocks }));
@@ -32,6 +36,7 @@ const snapshot: ScanSnapshot = {
       path: "/Users/test/.agents/skills/detail-koala-ui",
       modifiedAtMs: 1,
       sizeBytes: 2300,
+      category: "未分类",
       visibility: [
         { app: "claude", enabled: true, mode: "linked" },
         { app: "gemini", enabled: false, mode: "disabled" },
@@ -39,14 +44,16 @@ const snapshot: ScanSnapshot = {
         { app: "hermes", enabled: false, mode: "disabled" },
         { app: "codex", enabled: true, mode: "auto" },
         { app: "cursor", enabled: true, mode: "auto" },
+        { app: "zcode", enabled: true, mode: "auto" },
       ],
     },
     {
-      name: "unit-test-skill",
-      description: "单元测试规范",
-      path: "/Users/test/.agents/skills/unit-test-skill",
+      name: "using-superpowers",
+      description: "Harness the superpowers skill framework",
+      path: "/Users/test/.agents/skills/using-superpowers",
       modifiedAtMs: 2,
-      sizeBytes: 100,
+      sizeBytes: 200,
+      category: "superpowers",
       visibility: [
         { app: "claude", enabled: false, mode: "disabled" },
         { app: "gemini", enabled: false, mode: "disabled" },
@@ -54,6 +61,24 @@ const snapshot: ScanSnapshot = {
         { app: "hermes", enabled: false, mode: "disabled" },
         { app: "codex", enabled: true, mode: "auto" },
         { app: "cursor", enabled: true, mode: "auto" },
+        { app: "zcode", enabled: true, mode: "auto" },
+      ],
+    },
+    {
+      name: "unit-test-skill",
+      description: "单元测试规范",
+      path: "/Users/test/.agents/skills/unit-test-skill",
+      modifiedAtMs: 3,
+      sizeBytes: 100,
+      category: "未分类",
+      visibility: [
+        { app: "claude", enabled: false, mode: "disabled" },
+        { app: "gemini", enabled: false, mode: "disabled" },
+        { app: "openCode", enabled: false, mode: "disabled" },
+        { app: "hermes", enabled: false, mode: "disabled" },
+        { app: "codex", enabled: true, mode: "auto" },
+        { app: "cursor", enabled: true, mode: "auto" },
+        { app: "zcode", enabled: true, mode: "auto" },
       ],
     },
   ],
@@ -63,10 +88,10 @@ const settings: SettingsSnapshot = {
   settings: {
     schemaVersion: 1,
     appPaths: {},
-    appSupport: { claude: true, gemini: true, openCode: true, hermes: true, codex: true, cursor: true },
+    appSupport: { claude: true, gemini: true, openCode: true, hermes: true, codex: true, cursor: true, zcode: true },
     lastSection: "library",
-    skillFilter: "all",
     libraryView: "list",
+    skillCategories: {},
   },
   paths: {
     claude: "/Users/test/.claude/skills",
@@ -75,6 +100,7 @@ const settings: SettingsSnapshot = {
     hermes: "/Users/test/.hermes/skills",
     codex: "/Users/test/.agents/skills",
     cursor: "/Users/test/.agents/skills",
+    zcode: "/Users/test/.agents/skills",
   },
 };
 
@@ -98,7 +124,7 @@ it("opens the inspector from a selected Skill and renders fixed native visibilit
   await user.click(screen.getByRole("option", { name: "detail-koala-ui" }));
   expect(await screen.findByRole("heading", { name: "detail-koala-ui" })).toBeVisible();
   expect(screen.getAllByText("Koala UI 组件规范")).toHaveLength(2);
-  expect(screen.getAllByText("自动可见")).toHaveLength(2);
+  expect(screen.getAllByText("自动可见")).toHaveLength(3);
   expect(screen.queryByRole("switch", { name: "Codex" })).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "关闭详情遮罩" }));
   expect(screen.queryByRole("dialog", { name: "Skill 详情" })).not.toBeInTheDocument();
@@ -130,7 +156,7 @@ it("switches to cards while preserving filtering and persists the choice", async
   await user.click(screen.getByRole("button", { name: "卡片" }));
   expect(screen.getByRole("button", { name: "卡片" })).toHaveAttribute("aria-pressed", "true");
   expect(screen.getByRole("option", { name: "detail-koala-ui" })).toBeVisible();
-  expect(mocks.updateUiPreferences).toHaveBeenCalledWith("library", "all", "cards");
+  expect(mocks.updateUiPreferences).toHaveBeenCalledWith("library", "cards");
   await user.click(screen.getByRole("option", { name: "detail-koala-ui" }));
   expect(await screen.findByRole("dialog", { name: "Skill 详情" })).toBeVisible();
   await user.click(screen.getByRole("button", { name: "关闭详情" }));
@@ -140,8 +166,12 @@ it("switches to cards while preserving filtering and persists the choice", async
 it("supports keyboard selection in the skill collection", async () => {
   const user = userEvent.setup();
   render(<App />);
-  const first = await screen.findByRole("option", { name: "detail-koala-ui" });
+  await screen.findByRole("option", { name: "detail-koala-ui" });
+  const first = screen.getByRole("option", { name: "detail-koala-ui" });
   await user.click(first);
+  await waitFor(() => expect(screen.getByRole("dialog", { name: "Skill 详情" })).toBeVisible());
+  await user.keyboard("{ArrowDown}");
+  await waitFor(() => expect(screen.getByRole("heading", { name: "using-superpowers" })).toBeVisible());
   await user.keyboard("{ArrowDown}");
   expect(await screen.findByRole("heading", { name: "unit-test-skill" })).toBeVisible();
   expect(screen.getByRole("option", { name: "unit-test-skill" })).toHaveFocus();
@@ -233,15 +263,66 @@ it("explains conflicting import decisions inline", async () => {
 
 it("lists and restores verified backups", async () => {
   const user = userEvent.setup();
-  const backup = { id: "alpha/1", skillName: "alpha", createdAtMs: 1, operation: "uninstall" as const, path: "/backup/alpha/1" };
+  const backup = { id: "alpha/1", skillName: "alpha", createdAtMs: 1, operation: "uninstall" as const, path: "/backup/alpha/1", reason: "已被替代" };
   mocks.listBackups.mockResolvedValue([backup]);
   mocks.restoreBackup.mockResolvedValue(snapshot);
   render(<App />);
   await user.click(await screen.findByRole("button", { name: /备份/ }));
   expect(await screen.findByText("alpha")).toBeVisible();
+  expect(screen.getByText("原因：已被替代")).toBeVisible();
   await user.click(screen.getByRole("button", { name: "恢复" }));
   expect(await screen.findByRole("status")).toHaveTextContent("alpha 已恢复");
   expect(mocks.restoreBackup).toHaveBeenCalledWith("alpha/1");
+});
+
+it("permanently deletes a backup snapshot", async () => {
+  const user = userEvent.setup();
+  const backup = { id: "alpha/1", skillName: "alpha", createdAtMs: 1, operation: "uninstall" as const, path: "/backup/alpha/1" };
+  mocks.listBackups.mockResolvedValue([backup]);
+  mocks.deleteBackup.mockResolvedValue([]);
+  render(<App />);
+  await user.click(await screen.findByRole("button", { name: /备份/ }));
+  await user.click(await screen.findByRole("button", { name: "彻底删除" }));
+  await waitFor(() => expect(mocks.deleteBackup).toHaveBeenCalledWith("alpha/1"));
+  expect(await screen.findByRole("status")).toHaveTextContent("彻底删除");
+  expect(screen.queryByText("alpha")).not.toBeInTheDocument();
+});
+
+it("opens a backup snapshot with an external app", async () => {
+  const user = userEvent.setup();
+  const backup = { id: "alpha/1", skillName: "alpha", createdAtMs: 1, operation: "uninstall" as const, path: "/backup/alpha/1" };
+  mocks.listBackups.mockResolvedValue([backup]);
+  mocks.openBackupWith.mockResolvedValue(undefined);
+  render(<App />);
+  await user.click(await screen.findByRole("button", { name: /备份/ }));
+  await user.click(await screen.findByRole("button", { name: "打开 alpha 方式" }));
+  await user.click(await screen.findByRole("menuitem", { name: "用 访达 打开" }));
+  await waitFor(() => expect(mocks.openBackupWith).toHaveBeenCalledWith("alpha/1", "finder"));
+});
+
+it("groups skills by category by default and can toggle off", async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await screen.findByRole("option", { name: "using-superpowers" });
+  const headers = document.querySelectorAll(".skill-group-header");
+  const headerNames = Array.from(headers).map((el) => el.textContent || "");
+  expect(headerNames.some((t) => t.includes("superpowers"))).toBe(true);
+  expect(headerNames.some((t) => t.includes("未分类"))).toBe(true);
+  await user.click(screen.getByRole("button", { name: "已分组" }));
+  expect(document.querySelectorAll(".skill-group-header")).toHaveLength(0);
+});
+
+it("saves a manual category override from the inspector", async () => {
+  const user = userEvent.setup();
+  mocks.setSkillCategory.mockResolvedValue(snapshot);
+  render(<App />);
+  await user.click(await screen.findByRole("option", { name: "detail-koala-ui" }));
+  const input = screen.getByPlaceholderText("未分类");
+  await user.clear(input);
+  await user.type(input, "前端");
+  expect(input).toHaveValue("前端");
+  await user.click(screen.getByRole("button", { name: "保存" }));
+  await waitFor(() => expect(mocks.setSkillCategory).toHaveBeenCalledWith("detail-koala-ui", "前端"));
 });
 
 it("saves editable managed-app paths while native paths remain fixed", async () => {
@@ -258,7 +339,7 @@ it("saves editable managed-app paths while native paths remain fixed", async () 
   const claudeRow = input.closest("label")!;
   await user.click(within(claudeRow).getByRole("button", { name: "保存" }));
   await waitFor(() => expect(mocks.updateAppPath).toHaveBeenCalledWith("claude", "/custom/claude"));
-  expect(screen.getAllByText("/Users/test/.agents/skills")).toHaveLength(2);
+  expect(screen.getAllByText("/Users/test/.agents/skills")).toHaveLength(3);
 });
 
 it("surfaces a corrupted configuration warning", async () => {
@@ -285,15 +366,34 @@ it("shows the actual conflicting application path", async () => {
   expect(await screen.findByText("/Users/test/.claude/skills/detail-koala-ui")).toBeVisible();
 });
 
-it("states backup location and retention in uninstall confirmation", async () => {
+it("expands an inline uninstall confirmation with optional reason", async () => {
   const user = userEvent.setup();
-  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+  mocks.uninstallSkill.mockResolvedValue({
+    id: "detail-koala-ui/1",
+    skillName: "detail-koala-ui",
+    createdAtMs: 1,
+    operation: "uninstall",
+    path: "/backup",
+  });
   render(<App />);
   await user.click(await screen.findByRole("option", { name: "detail-koala-ui" }));
   await user.click(await screen.findByRole("button", { name: /移至备份并卸载/ }));
-  expect(confirm).toHaveBeenCalledWith(expect.stringContaining("~/.skill-switch/backups/"));
-  expect(confirm).toHaveBeenCalledWith(expect.stringContaining("最多保留 5 份"));
-  confirm.mockRestore();
+  const dialog = await screen.findByRole("alertdialog", { name: "确认卸载 detail-koala-ui" });
+  expect(within(dialog).getByText(/~\/\.skill-switch\/backups\//)).toBeVisible();
+  expect(within(dialog).getByText(/最多保留 5 份/)).toBeVisible();
+  await user.type(within(dialog).getByPlaceholderText(/选填|不再使用/), "已被替代");
+  await user.click(within(dialog).getByRole("button", { name: "确认卸载" }));
+  await waitFor(() => expect(mocks.uninstallSkill).toHaveBeenCalledWith("detail-koala-ui", "已被替代"));
+});
+
+it("cancels the inline uninstall confirmation", async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await user.click(await screen.findByRole("option", { name: "detail-koala-ui" }));
+  await user.click(await screen.findByRole("button", { name: /移至备份并卸载/ }));
+  await user.click(await screen.findByRole("button", { name: "取消" }));
+  expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+  expect(mocks.uninstallSkill).not.toHaveBeenCalled();
 });
 
 it("shows candidate modification time in the import comparison", async () => {

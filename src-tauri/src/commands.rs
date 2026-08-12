@@ -101,10 +101,10 @@ pub fn resolve_import_conflict(request: ImportRequest) -> Result<ImportResult, C
 }
 
 #[tauri::command]
-pub fn uninstall_skill(skill_name: String) -> Result<BackupRecord, CommandError> {
+pub fn uninstall_skill(skill_name: String, reason: String) -> Result<BackupRecord, CommandError> {
     let home = current_home()?;
     let (settings, _) = loaded_settings(&home)?;
-    backup_service::uninstall_skill(&home, &settings, &skill_name)
+    backup_service::uninstall_skill(&home, &settings, &skill_name, &reason)
 }
 
 #[tauri::command]
@@ -117,6 +117,13 @@ pub fn restore_backup(backup_id: String) -> Result<ScanSnapshot, CommandError> {
     let home = current_home()?;
     let (settings, _) = loaded_settings(&home)?;
     backup_service::restore_backup(&home, &settings, &backup_id)
+}
+
+#[tauri::command]
+pub fn delete_backup(backup_id: String) -> Result<Vec<BackupRecord>, CommandError> {
+    let home = current_home()?;
+    backup_service::delete_backup(&home, &backup_id)?;
+    backup_service::list_backups(&home)
 }
 
 #[tauri::command]
@@ -134,7 +141,7 @@ pub fn update_app_path(
     if app.is_native_ssot() {
         return Err(CommandError::new(
             ErrorCode::InvalidPath,
-            "Codex 和 Cursor 路径固定为统一目录",
+            "Codex、Cursor 和 Zcode 路径固定为统一目录",
         ));
     }
     let home = current_home()?;
@@ -156,7 +163,7 @@ pub fn update_app_path(
         AppKind::Gemini => settings.app_paths.gemini = normalized,
         AppKind::OpenCode => settings.app_paths.open_code = normalized,
         AppKind::Hermes => settings.app_paths.hermes = normalized,
-        AppKind::Codex | AppKind::Cursor => unreachable!(),
+        AppKind::Codex | AppKind::Cursor | AppKind::Zcode => unreachable!(),
     }
     save_settings(&home, &settings)?;
     Ok(settings_snapshot(&home, settings, None))
@@ -174,14 +181,11 @@ pub fn set_app_support(app: AppKind, enabled: bool) -> Result<SettingsSnapshot, 
 #[tauri::command]
 pub fn update_ui_preferences(
     last_section: String,
-    skill_filter: String,
     library_view: String,
 ) -> Result<SettingsSnapshot, CommandError> {
     let allowed_sections = ["library", "import", "backups", "settings"];
-    let allowed_filters = ["all", "enabled", "disabled"];
     let allowed_views = ["list", "cards"];
     if !allowed_sections.contains(&last_section.as_str())
-        || !allowed_filters.contains(&skill_filter.as_str())
         || !allowed_views.contains(&library_view.as_str())
     {
         return Err(CommandError::new(ErrorCode::InvalidPath, "界面偏好值无效"));
@@ -189,10 +193,78 @@ pub fn update_ui_preferences(
     let home = current_home()?;
     let (mut settings, _) = loaded_settings(&home)?;
     settings.last_section = last_section;
-    settings.skill_filter = skill_filter;
     settings.library_view = library_view;
     save_settings(&home, &settings)?;
     Ok(settings_snapshot(&home, settings, None))
+}
+
+#[tauri::command]
+pub fn set_skill_category(
+    skill_name: String,
+    category: String,
+) -> Result<ScanSnapshot, CommandError> {
+    crate::skill_fs::validate_skill_name(&skill_name)?;
+    let trimmed = category.trim();
+    let home = current_home()?;
+    let (mut settings, _) = loaded_settings(&home)?;
+    if trimmed.is_empty() {
+        settings.skill_categories.remove(&skill_name);
+    } else {
+        settings
+            .skill_categories
+            .insert(skill_name, trimmed.to_string());
+    }
+    save_settings(&home, &settings)?;
+    let mut snapshot = crate::skill_fs::scan_skills(&home, &settings)?;
+    link_manager::populate_visibility(&home, &settings, &mut snapshot);
+    Ok(snapshot)
+}
+
+fn launch_opener(path: &Path, opener: &str) -> Result<(), CommandError> {
+    let app_name = match opener {
+        "finder" => "Finder",
+        "vscode" => "Visual Studio Code",
+        "cursor" => "Cursor",
+        _ => {
+            return Err(CommandError::new(
+                ErrorCode::InvalidPath,
+                "不支持的打开方式",
+            ));
+        }
+    };
+    let status = std::process::Command::new("open")
+        .arg("-a")
+        .arg(app_name)
+        .arg(path)
+        .status()
+        .map_err(|error| {
+            CommandError::new(ErrorCode::Io, "无法启动外部应用").with_detail(error.to_string())
+        })?;
+    if !status.success() {
+        return Err(CommandError::new(ErrorCode::Io, "打开外部应用失败"));
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub fn open_skill_with(skill_name: String, opener: String) -> Result<(), CommandError> {
+    let home = current_home()?;
+    crate::skill_fs::validate_skill_name(&skill_name)?;
+    let source = crate::paths::ssot_dir(&home).join(&skill_name);
+    if !source.is_dir() {
+        return Err(CommandError::new(
+            ErrorCode::InvalidPath,
+            "Skill 目录不存在",
+        ));
+    }
+    launch_opener(&source, &opener)
+}
+
+#[tauri::command]
+pub fn open_backup_with(backup_id: String, opener: String) -> Result<(), CommandError> {
+    let home = current_home()?;
+    let content = backup_service::backup_content_path(&home, &backup_id)?;
+    launch_opener(&content, &opener)
 }
 
 #[cfg(test)]

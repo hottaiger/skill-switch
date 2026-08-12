@@ -32,7 +32,7 @@ fn source_path(
     if app.is_native_ssot() {
         return Err(CommandError::new(
             ErrorCode::InvalidPath,
-            "Codex 和 Cursor 不参与本地导入",
+            "Codex、Cursor 和 Zcode 不参与本地导入",
         ));
     }
     let source = app_root(home, app, settings).join(name);
@@ -300,6 +300,7 @@ pub fn import_candidate(
                 BackupOperation::Import,
                 &source,
                 vec![request.app],
+                None,
             ) {
                 Ok(backup) => backup,
                 Err(error) => {
@@ -331,6 +332,7 @@ pub fn import_candidate(
                 BackupOperation::Import,
                 &source,
                 vec![request.app],
+                None,
             )?;
             replace_source_with_link(
                 &source,
@@ -364,6 +366,7 @@ pub fn import_candidate(
                 BackupOperation::Replace,
                 &destination,
                 visible_apps,
+                None,
             )?;
             let temporary =
                 ssot_dir(home).join(format!(".{}.replace-{}", request.name, std::process::id()));

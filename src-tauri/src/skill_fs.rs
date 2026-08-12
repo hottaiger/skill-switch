@@ -88,7 +88,7 @@ pub fn directory_hash(path: &Path) -> Result<String, CommandError> {
     Ok(format!("{:x}", digest.finalize()))
 }
 
-pub fn scan_skills(home: &Path, _settings: &Settings) -> Result<ScanSnapshot, CommandError> {
+pub fn scan_skills(home: &Path, settings: &Settings) -> Result<ScanSnapshot, CommandError> {
     let root = ssot_dir(home);
     fs::create_dir_all(&root)
         .map_err(|error| CommandError::io("创建统一 Skill 目录失败", &root, &error))?;
@@ -141,12 +141,13 @@ pub fn scan_skills(home: &Path, _settings: &Settings) -> Result<ScanSnapshot, Co
             .and_then(|content| parse_description(&content));
         let modified_at_ms = metadata.modified().map(unix_ms).unwrap_or_default();
         skills.push(SkillRecord {
-            name,
+            name: name.clone(),
             description,
             path: path.to_string_lossy().into_owned(),
             modified_at_ms,
             size_bytes: directory_size(&path),
             visibility: Vec::new(),
+            category: crate::models::resolve_category(&name, &settings.skill_categories),
         });
     }
     skills.sort_by_key(|skill| skill.name.to_lowercase());

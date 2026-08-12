@@ -1,4 +1,5 @@
-import { ALL_APPS, APP_LABELS, type AppKind, type AppSupport, type SkillRecord } from "../types";
+import { useEffect, useState } from "react";
+import { ALL_APPS, APP_LABELS, isNativeApp, type AppKind, type AppSupport, type SkillRecord } from "../types";
 
 interface SkillInspectorProps {
   skill?: SkillRecord;
@@ -6,26 +7,68 @@ interface SkillInspectorProps {
   appSupport: AppSupport;
   onClose: () => void;
   onToggle: (app: AppKind, enabled: boolean) => void;
-  onUninstall: () => void;
+  onUninstall: (reason: string) => void;
+  onSetCategory: (skillName: string, category: string) => void;
 }
 
 function formatSize(bytes: number) {
   return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
 }
 
-export function SkillInspector({ skill, busyKey, appSupport, onClose, onToggle, onUninstall }: SkillInspectorProps) {
+function formatTime(ms: number) {
+  const date = new Date(ms);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+export function SkillInspector({ skill, busyKey, appSupport, onClose, onToggle, onUninstall, onSetCategory }: SkillInspectorProps) {
+  const [confirming, setConfirming] = useState(false);
+  const [reason, setReason] = useState("");
+  const [categoryDraft, setCategoryDraft] = useState("");
   if (!skill) return null;
+  const uninstalling = busyKey === `${skill.name}:uninstall`;
+  const savingCategory = busyKey === `${skill.name}:category`;
+  useEffect(() => { setCategoryDraft(skill.category); }, [skill.name, skill.category]);
+  const draft = categoryDraft;
   return (
     <aside className="inspector" role="dialog" aria-label="Skill 详情">
       <div className="inspector-topbar"><span className="eyebrow">SKILL 详情</span><button className="inspector-close" aria-label="关闭详情" onClick={onClose}>×</button></div>
       <h2>{skill.name}</h2>
-      <p className="meta">本地 · {formatSize(skill.sizeBytes)}</p>
+      <p className="meta">本地 · {formatSize(skill.sizeBytes)} · 修改于 {formatTime(skill.modifiedAtMs)}</p>
+      <label className="category-edit">
+        <span>分类</span>
+        <div className="category-edit-row">
+          <input
+            value={draft}
+            onChange={(event) => setCategoryDraft(event.target.value)}
+            placeholder="未分类"
+            disabled={savingCategory}
+          />
+          <button
+            className="ghost-button"
+            disabled={savingCategory || draft === skill.category}
+            onClick={() => onSetCategory(skill.name, draft.trim())}
+          >
+            {savingCategory ? "保存中" : "保存"}
+          </button>
+          {skill.category !== "未分类" && (
+            <button
+              className="ghost-button"
+              disabled={savingCategory}
+              onClick={() => { setCategoryDraft("未分类"); onSetCategory(skill.name, "未分类"); }}
+            >
+              清除
+            </button>
+          )}
+        </div>
+        <small>默认按内置规则(superpowers 清单)分类;手动填写可覆盖,留空则回退。</small>
+      </label>
       <div className="description">{skill.description || "该 Skill 未提供 description。"}</div>
       <h3>应用可见性</h3>
       <div className="visibility-list">
         {ALL_APPS.filter((app) => appSupport[app]).map((app) => {
           const state = skill.visibility.find((item) => item.app === app);
-          const native = app === "codex" || app === "cursor";
+          const native = isNativeApp(app);
           const busy = busyKey === `${skill.name}:${app}`;
           return (
             <div className="visibility-row" key={app}>
@@ -53,9 +96,31 @@ export function SkillInspector({ skill, busyKey, appSupport, onClose, onToggle, 
       </div>
       <h3>数据源</h3>
       <code className="path-box">{skill.path}</code>
-      <button className="danger-button" disabled={busyKey === `${skill.name}:uninstall`} onClick={onUninstall}>
-        移至备份并卸载…
-      </button>
+      {confirming ? (
+        <div className="confirm-uninstall" role="alertdialog" aria-label={`确认卸载 ${skill.name}`}>
+          <p className="confirm-warning">卸载前会备份到 <code>~/.skill-switch/backups/</code>,每个 Skill 最多保留 5 份。此操作会移除统一目录中的 Skill 及所有软链接。</p>
+          <label className="confirm-reason">
+            <span>卸载原因(选填)</span>
+            <textarea
+              value={reason}
+              onChange={(event) => setReason(event.target.value.slice(0, 200))}
+              placeholder="例如:不再使用 / 已被替代 / 内容过时"
+              rows={2}
+              maxLength={200}
+            />
+          </label>
+          <div className="confirm-actions">
+            <button className="ghost-button" disabled={uninstalling} onClick={() => { setConfirming(false); setReason(""); }}>取消</button>
+            <button className="danger-button" disabled={uninstalling} onClick={() => onUninstall(reason.trim())}>
+              {uninstalling ? "卸载中…" : "确认卸载"}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button className="danger-button" disabled={uninstalling} onClick={() => setConfirming(true)}>
+          移至备份并卸载…
+        </button>
+      )}
     </aside>
   );
 }

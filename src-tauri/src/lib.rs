@@ -30,10 +30,14 @@ pub fn run() {
             commands::uninstall_skill,
             commands::list_backups,
             commands::restore_backup,
+            commands::delete_backup,
             commands::get_settings,
             commands::update_app_path,
             commands::set_app_support,
             commands::update_ui_preferences,
+            commands::open_skill_with,
+            commands::open_backup_with,
+            commands::set_skill_category,
         ])
         .build(tauri::generate_context!())
         .expect("failed to build Skill Switch");

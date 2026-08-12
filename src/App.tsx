@@ -17,10 +17,10 @@ import type {
   ScanSnapshot,
   Section,
   SettingsSnapshot,
-  SkillFilter,
+  SkillOpener,
 } from "./types";
 
-const DEFAULT_APP_SUPPORT: AppSupport = { claude: true, gemini: true, openCode: true, hermes: true, codex: true, cursor: true };
+const DEFAULT_APP_SUPPORT: AppSupport = { claude: true, gemini: true, openCode: true, hermes: true, codex: true, cursor: true, zcode: true };
 
 function errorMessage(error: unknown) {
   if (typeof error === "object" && error && "message" in error) return String((error as CommandError).message);
@@ -35,8 +35,8 @@ export default function App() {
   const [backups, setBackups] = useState<BackupRecord[]>([]);
   const [selectedName, setSelectedName] = useState<string>();
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<SkillFilter>("all");
   const [libraryView, setLibraryView] = useState<LibraryView>("list");
+  const [groupByCategory, setGroupByCategory] = useState(true);
   const [appFilter, setAppFilter] = useState<AppKind>();
   const [busyKey, setBusyKey] = useState<string>();
   const [loading, setLoading] = useState(true);
@@ -76,7 +76,6 @@ export default function App() {
       api.getSettings().then((value) => {
         setSettings(value);
         setSection(value.settings.lastSection);
-        setFilter(value.settings.skillFilter);
         setLibraryView(value.settings.libraryView);
         if (value.warning) setMessage({ type: "error", text: value.warning.message });
       }).catch((error) => setMessage({ type: "error", text: errorMessage(error) })),
@@ -100,20 +99,16 @@ export default function App() {
   );
   const appSupport = settings?.settings.appSupport || DEFAULT_APP_SUPPORT;
 
-  const persistPreference = (nextSection: Section, nextFilter: SkillFilter, nextView = libraryView) => {
-    void api.updateUiPreferences(nextSection, nextFilter, nextView).catch(() => undefined);
+  const persistPreference = (nextSection: Section, nextView = libraryView) => {
+    void api.updateUiPreferences(nextSection, nextView).catch(() => undefined);
   };
 
   const changeSection = (next: Section) => {
-    setSection(next); setAppFilter(undefined); persistPreference(next, filter);
-  };
-
-  const changeFilter = (next: SkillFilter) => {
-    setFilter(next); persistPreference(section, next);
+    setSection(next); setAppFilter(undefined); persistPreference(next);
   };
 
   const changeLibraryView = (next: LibraryView) => {
-    setLibraryView(next); persistPreference(section, filter, next);
+    setLibraryView(next); persistPreference(section, next);
   };
 
   useEffect(() => {
@@ -144,13 +139,21 @@ export default function App() {
     } finally { setBusyKey(undefined); }
   };
 
-  const uninstall = async () => {
-    if (!selectedSkill || !window.confirm(
-      `卸载 ${selectedSkill.name}？卸载前会备份到 ~/.skill-switch/backups/，每个 Skill 最多保留 5 份。`,
-    )) return;
+  const openSkillWith = async (name: string, opener: SkillOpener) => {
+    const key = `${name}:open:${opener}`;
+    setBusyKey(key); setMessage(undefined);
+    try {
+      await api.openSkillWith(name, opener);
+    } catch (error) {
+      setMessage({ type: "error", text: errorMessage(error) });
+    } finally { setBusyKey(undefined); }
+  };
+
+  const uninstall = async (reason: string) => {
+    if (!selectedSkill) return;
     setBusyKey(`${selectedSkill.name}:uninstall`); setMessage(undefined);
     try {
-      await api.uninstallSkill(selectedSkill.name);
+      await api.uninstallSkill(selectedSkill.name, reason);
       setMessage({ type: "success", text: `${selectedSkill.name} 已备份并卸载` });
       await Promise.all([refreshSkills(), refreshBackups()]);
     } catch (error) { setMessage({ type: "error", text: errorMessage(error) }); }
@@ -177,6 +180,36 @@ export default function App() {
       setMessage({ type: "success", text: `${backup.skillName} 已恢复` });
     } catch (error) { setMessage({ type: "error", text: errorMessage(error) }); }
     finally { setBusyKey(undefined); }
+  };
+
+  const permanentDelete = async (backup: BackupRecord) => {
+    setBusyKey(backup.id); setMessage(undefined);
+    try {
+      const next = await api.deleteBackup(backup.id);
+      setBackups(next);
+      setMessage({ type: "success", text: `${backup.skillName} 的备份已彻底删除` });
+    } catch (error) { setMessage({ type: "error", text: errorMessage(error) }); }
+    finally { setBusyKey(undefined); }
+  };
+
+  const openBackupWith = async (backupId: string, opener: SkillOpener) => {
+    setBusyKey(`${backupId}:open:${opener}`); setMessage(undefined);
+    try {
+      await api.openBackupWith(backupId, opener);
+    } catch (error) {
+      setMessage({ type: "error", text: errorMessage(error) });
+    } finally { setBusyKey(undefined); }
+  };
+
+  const setSkillCategory = async (skillName: string, category: string) => {
+    const key = `${skillName}:category`;
+    setBusyKey(key); setMessage(undefined);
+    try {
+      const next = await api.setSkillCategory(skillName, category);
+      setSnapshot(next);
+    } catch (error) {
+      setMessage({ type: "error", text: errorMessage(error) });
+    } finally { setBusyKey(undefined); }
   };
 
   const savePath = async (app: AppKind, path: string) => {
@@ -209,18 +242,18 @@ export default function App() {
         appFilter={appFilter}
         appSupport={appSupport}
         onSectionChange={changeSection}
-        onAppFilter={(app) => { setSection("library"); setAppFilter(app); persistPreference("library", filter); }}
+        onAppFilter={(app) => { setSection("library"); setAppFilter(app); persistPreference("library"); }}
       />
       <main className="main-panel">
         {message && <div role={message.type === "error" ? "alert" : "status"} className={`message-banner ${message.type}`}><span>{message.text}</span><button aria-label="关闭提示" onClick={() => setMessage(undefined)}>×</button></div>}
-        {section === "library" && <SkillLibrary skills={snapshot?.skills || []} selectedName={selectedName} search={search} filter={filter} appFilter={appFilter} appSupport={appSupport} view={libraryView} loading={loading} onSearch={setSearch} onFilter={changeFilter} onViewChange={changeLibraryView} onSelect={setSelectedName} onRefresh={() => void refreshSkills()} onImport={() => changeSection("import")} onClearAppFilter={() => setAppFilter(undefined)} />}
+        {section === "library" && <SkillLibrary skills={snapshot?.skills || []} selectedName={selectedName} search={search} appFilter={appFilter} appSupport={appSupport} view={libraryView} loading={loading} groupByCategory={groupByCategory} onSearch={setSearch} onViewChange={changeLibraryView} onToggleGroup={() => setGroupByCategory((value) => !value)} onSelect={setSelectedName} onRefresh={() => void refreshSkills()} onImport={() => changeSection("import")} onClearAppFilter={() => setAppFilter(undefined)} onOpenWith={openSkillWith} />}
         {section === "import" && <ImportPage candidates={candidates} loading={loading} busyKey={busyKey} appSupport={appSupport} onRefresh={() => void refreshImports()} onImport={(candidate, decision) => void runImport(candidate, decision)} />}
-        {section === "backups" && <BackupPage backups={backups} loading={loading} busyKey={busyKey} onRefresh={() => void refreshBackups()} onRestore={(backup) => void restore(backup)} />}
+        {section === "backups" && <BackupPage backups={backups} loading={loading} busyKey={busyKey} onRefresh={() => void refreshBackups()} onRestore={(backup) => void restore(backup)} onPermanentDelete={(backup) => void permanentDelete(backup)} onOpenWith={(backupId, opener) => void openBackupWith(backupId, opener)} />}
         {section === "settings" && <SettingsPage snapshot={settings} busyKey={busyKey} onSave={(app, path) => void savePath(app, path)} onToggleSupport={(app, enabled) => void toggleAppSupport(app, enabled)} />}
       </main>
       {section === "library" && selectedSkill && <>
         <button className="inspector-backdrop" aria-label="关闭详情遮罩" onClick={() => setSelectedName(undefined)} />
-        <SkillInspector skill={selectedSkill} busyKey={busyKey} appSupport={appSupport} onClose={() => setSelectedName(undefined)} onToggle={(app, enabled) => void toggleVisibility(app, enabled)} onUninstall={() => void uninstall()} />
+        <SkillInspector skill={selectedSkill} busyKey={busyKey} appSupport={appSupport} onClose={() => setSelectedName(undefined)} onToggle={(app, enabled) => void toggleVisibility(app, enabled)} onUninstall={(reason) => void uninstall(reason)} onSetCategory={(name, category) => void setSkillCategory(name, category)} />
       </>}
     </div>
   );

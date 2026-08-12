@@ -1,8 +1,8 @@
-export type AppKind = "claude" | "gemini" | "openCode" | "hermes" | "codex" | "cursor";
+export type AppKind = "claude" | "gemini" | "openCode" | "hermes" | "codex" | "cursor" | "zcode";
 export type VisibilityMode = "linked" | "disabled" | "auto" | "conflict";
 export type Section = "library" | "import" | "backups" | "settings";
-export type SkillFilter = "all" | "enabled" | "disabled";
 export type LibraryView = "list" | "cards";
+export type SkillOpener = "finder" | "vscode" | "cursor";
 
 export interface CommandError {
   code: string;
@@ -25,6 +25,7 @@ export interface SkillRecord {
   modifiedAtMs: number;
   sizeBytes: number;
   visibility: VisibilityState[];
+  category: string;
 }
 
 export interface ScanSnapshot {
@@ -48,8 +49,8 @@ export interface Settings {
   appPaths: AppPathOverrides;
   appSupport: AppSupport;
   lastSection: Section;
-  skillFilter: SkillFilter;
   libraryView: LibraryView;
+  skillCategories: Record<string, string>;
 }
 
 export interface SettingsSnapshot {
@@ -66,6 +67,7 @@ export interface BackupRecord {
   createdAtMs: number;
   operation: BackupOperation;
   path: string;
+  reason?: string;
 }
 
 export type ImportStatus = "ready" | "identical" | "conflict" | "invalid";
@@ -109,7 +111,13 @@ export const APP_LABELS: Record<AppKind, string> = {
   hermes: "Hermes",
   codex: "Codex",
   cursor: "Cursor",
+  zcode: "Zcode",
 };
 
 export const MANAGED_APPS: AppKind[] = ["claude", "gemini", "openCode", "hermes"];
-export const ALL_APPS: AppKind[] = [...MANAGED_APPS, "codex", "cursor"];
+export const NATIVE_APPS: AppKind[] = ["codex", "cursor", "zcode"];
+export const ALL_APPS: AppKind[] = [...MANAGED_APPS, ...NATIVE_APPS];
+
+export function isNativeApp(app: AppKind): boolean {
+  return NATIVE_APPS.includes(app);
+}

@@ -64,7 +64,7 @@ fn app_root_with_hermes_home(
                 .unwrap_or_else(|| home.join(".hermes"))
                 .join("skills")
         }),
-        AppKind::Codex | AppKind::Cursor => ssot_dir(home),
+        AppKind::Codex | AppKind::Cursor | AppKind::Zcode => ssot_dir(home),
     }
 }
 

@@ -5,11 +5,11 @@ import type {
   ImportCandidate,
   ImportExecution,
   ImportRequest,
-  ScanSnapshot,
   LibraryView,
+  ScanSnapshot,
   Section,
   SettingsSnapshot,
-  SkillFilter,
+  SkillOpener,
   VisibilityState,
 } from "./types";
 
@@ -22,16 +22,24 @@ export const api = {
     invoke<ImportExecution[]>("import_skills", { requests }),
   resolveImportConflict: (request: ImportRequest) =>
     invoke("resolve_import_conflict", { request }),
-  uninstallSkill: (skillName: string) =>
-    invoke<BackupRecord>("uninstall_skill", { skillName }),
+  uninstallSkill: (skillName: string, reason: string) =>
+    invoke<BackupRecord>("uninstall_skill", { skillName, reason }),
   listBackups: () => invoke<BackupRecord[]>("list_backups"),
   restoreBackup: (backupId: string) =>
     invoke<ScanSnapshot>("restore_backup", { backupId }),
+  deleteBackup: (backupId: string) =>
+    invoke<BackupRecord[]>("delete_backup", { backupId }),
   getSettings: () => invoke<SettingsSnapshot>("get_settings"),
   updateAppPath: (app: AppKind, path?: string) =>
     invoke<SettingsSnapshot>("update_app_path", { app, path: path || null }),
   setAppSupport: (app: AppKind, enabled: boolean) =>
     invoke<SettingsSnapshot>("set_app_support", { app, enabled }),
-  updateUiPreferences: (lastSection: Section, skillFilter: SkillFilter, libraryView: LibraryView) =>
-    invoke<SettingsSnapshot>("update_ui_preferences", { lastSection, skillFilter, libraryView }),
+  setSkillCategory: (skillName: string, category: string) =>
+    invoke<ScanSnapshot>("set_skill_category", { skillName, category }),
+  updateUiPreferences: (lastSection: Section, libraryView: LibraryView) =>
+    invoke<SettingsSnapshot>("update_ui_preferences", { lastSection, libraryView }),
+  openSkillWith: (skillName: string, opener: SkillOpener) =>
+    invoke<void>("open_skill_with", { skillName, opener }),
+  openBackupWith: (backupId: string, opener: SkillOpener) =>
+    invoke<void>("open_backup_with", { backupId, opener }),
 };

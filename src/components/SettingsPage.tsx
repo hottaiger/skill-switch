@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ALL_APPS, APP_LABELS, MANAGED_APPS, type AppKind, type SettingsSnapshot } from "../types";
+import { ALL_APPS, APP_LABELS, MANAGED_APPS, NATIVE_APPS, type AppKind, type SettingsSnapshot } from "../types";
 import { AppIcon } from "./AppIcon";
 
 interface SettingsPageProps {
@@ -16,7 +16,7 @@ export function SettingsPage({ snapshot, busyKey, onSave, onToggleSupport }: Set
   }, [snapshot]);
   const appSupport = snapshot?.settings.appSupport;
   const managedApps = MANAGED_APPS.filter((app) => appSupport?.[app]);
-  const nativeApps = (["codex", "cursor"] as AppKind[]).filter((app) => appSupport?.[app]);
+  const nativeApps = NATIVE_APPS.filter((app) => appSupport?.[app]);
   return (
     <section className="secondary-page settings-page">
       <div className="page-title-row"><div><h1>设置</h1><p>应用 Skill 目录与固定数据源</p></div></div>
