@@ -6,7 +6,7 @@ const BUILT_IN_CATEGORIES = ["Matt Pocock", "Comet", "GitNexus", "superpowers", 
 function categoryRule(category: string) {
   if (category === "Matt Pocock") return "Matt Pocock skills";
   if (category === "Comet") return "rpamis/comet · assets/skills-zh";
-  if (category === "GitNexus") return "abhigyanpatwari/GitNexus · gitnexus/skills";
+  if (category === "GitNexus") return "abhigyanpatwari/GitNexus v1.6.9 · gitnexus/skills";
   if (category === "superpowers") return "obra/superpowers";
   if (category === "openspec") return "Fission-AI/OpenSpec";
   return "未命中内置来源规则";

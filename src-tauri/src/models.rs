@@ -98,20 +98,17 @@ pub const COMET_SKILLS: [&str; 11] = [
     "comet-verify",
 ];
 
-/// 来自 abhigyanpatwari/GitNexus 的 gitnexus/skills 目录。
-pub const GITNEXUS_SKILLS: [&str; 12] = [
+/// 来自 abhigyanpatwari/GitNexus v1.6.9 的 gitnexus/skills 目录。
+pub const GITNEXUS_SKILLS: [&str; 9] = [
     "gitnexus-cli",
     "gitnexus-debugging",
     "gitnexus-exploring",
     "gitnexus-guide",
     "gitnexus-impact-analysis",
-    "gitnexus-lfg",
     "gitnexus-pdg-query",
-    "gitnexus-plan",
+    "gitnexus-pr-review",
     "gitnexus-refactoring",
-    "gitnexus-review",
     "gitnexus-taint-analysis",
-    "gitnexus-work",
 ];
 
 pub const MATT_POCOCK_CATEGORY: &str = "Matt Pocock";
@@ -193,7 +190,7 @@ mod category_tests {
     #[test]
     fn gitnexus_skills_use_the_gitnexus_category() {
         assert_eq!(
-            resolve_category("gitnexus-impact-analysis", &BTreeMap::new()),
+            resolve_category("gitnexus-pr-review", &BTreeMap::new()),
             "GitNexus"
         );
     }
