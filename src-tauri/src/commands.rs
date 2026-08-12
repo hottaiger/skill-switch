@@ -116,6 +116,17 @@ fn rename_custom_category_at(
             "自定义分类不存在",
         ));
     }
+    if next_name != previous_name
+        && settings
+            .custom_categories
+            .iter()
+            .any(|category| category == &next_name)
+    {
+        return Err(CommandError::new(
+            ErrorCode::InvalidPath,
+            "自定义分类已存在",
+        ));
+    }
     for category in &mut settings.custom_categories {
         if category == previous_name {
             *category = next_name.clone();
@@ -492,6 +503,41 @@ mod tests {
         assert_eq!(
             settings.skill_categories.get("local-skill"),
             Some(&"新瓜子FE".to_string())
+        );
+    }
+
+    #[test]
+    fn custom_category_rename_rejects_an_existing_target_without_mutation() {
+        let home = tempfile::tempdir().unwrap();
+        create_skill(home.path(), "local-skill");
+        create_custom_category_at(home.path(), "前端".into()).unwrap();
+        create_custom_category_at(home.path(), "后端".into()).unwrap();
+        set_skill_category_at(home.path(), "local-skill".into(), "前端".into()).unwrap();
+        let before = load_settings(home.path()).unwrap().settings;
+
+        let error =
+            rename_custom_category_at(home.path(), "前端".into(), "后端".into()).unwrap_err();
+
+        assert_eq!(error.code, ErrorCode::InvalidPath);
+        assert_eq!(load_settings(home.path()).unwrap().settings, before);
+    }
+
+    #[test]
+    fn custom_category_rename_allows_an_identical_normalized_name() {
+        let home = tempfile::tempdir().unwrap();
+        create_skill(home.path(), "local-skill");
+        create_custom_category_at(home.path(), "前端".into()).unwrap();
+        set_skill_category_at(home.path(), "local-skill".into(), "前端".into()).unwrap();
+
+        let snapshot =
+            rename_custom_category_at(home.path(), "前端".into(), " 前端 ".into()).unwrap();
+
+        assert_eq!(snapshot.skills[0].category, "前端");
+        let settings = load_settings(home.path()).unwrap().settings;
+        assert_eq!(settings.custom_categories, vec!["前端"]);
+        assert_eq!(
+            settings.skill_categories.get("local-skill"),
+            Some(&"前端".to_string())
         );
     }
 
