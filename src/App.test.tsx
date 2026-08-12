@@ -334,12 +334,28 @@ it("groups skills by category by default and can toggle off", async () => {
   expect(document.querySelectorAll(".skill-group-header")).toHaveLength(0);
 });
 
-it("shows a GitHub source link for automatically classified skills", async () => {
+it("shows a GitHub source link without exposing automatic recognition", async () => {
   const user = userEvent.setup();
   render(<App />);
   await user.click(await screen.findByRole("option", { name: "implement" }));
   expect(screen.getByRole("link", { name: "github.com/mattpocock/skills/tree/main/skills" }))
     .toHaveAttribute("href", "https://github.com/mattpocock/skills/tree/main/skills");
+  expect(screen.queryByText(/自动识别/)).not.toBeInTheDocument();
+});
+
+it("restores a manual category to the default category", async () => {
+  const user = userEvent.setup();
+  const manualSnapshot = structuredClone(snapshot);
+  const skill = manualSnapshot.skills.find((item) => item.name === "implement");
+  if (!skill) throw new Error("implement fixture missing");
+  skill.category = "项目专用";
+  skill.categorySource = "manual";
+  mocks.scanSkills.mockResolvedValue(manualSnapshot);
+  mocks.setSkillCategory.mockResolvedValue(snapshot);
+  render(<App />);
+  await user.click(await screen.findByRole("option", { name: "implement" }));
+  await user.click(screen.getByRole("button", { name: "恢复默认" }));
+  await waitFor(() => expect(mocks.setSkillCategory).toHaveBeenCalledWith("implement", ""));
 });
 
 it("saves a manual category override from the inspector", async () => {

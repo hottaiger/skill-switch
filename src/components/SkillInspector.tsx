@@ -97,7 +97,7 @@ export function SkillInspector({ skill, busyKey, appSupport, onClose, onToggle, 
             }}
             disabled={savingCategory}
           >
-            <option value="__auto__">自动识别（{skill.category}）</option>
+            <option value="__auto__">默认分类（{skill.category}）</option>
             {BUILT_IN_CATEGORIES.map((category) => <option value={category} key={category}>{category}</option>)}
             <option value="__custom__">自定义分类…</option>
           </select>
@@ -123,15 +123,13 @@ export function SkillInspector({ skill, busyKey, appSupport, onClose, onToggle, 
               disabled={savingCategory}
               onClick={() => { setCategoryDraft(""); onSetCategory(skill.name, ""); }}
             >
-              恢复自动
+              恢复默认
             </button>
           )}
         </div>
-        <small>
-          {skill.categorySource === "manual" ? "手动分类，优先于自动识别。" : source ? <>
-            自动识别：{source.label}。来源：<a className="category-source-link" href={source.url} target="_blank" rel="noreferrer">{source.url.replace("https://", "")}</a>
-          </> : "自动识别：未命中内置来源规则。"}
-        </small>
+        {skill.categorySource === "manual" ? <small>已手动设置分类。</small> : source && <small>
+          来源：{source.label}。<a className="category-source-link" href={source.url} target="_blank" rel="noreferrer">{source.url.replace("https://", "")}</a>
+        </small>}
       </label>
       <div className="description">{skill.description || "该 Skill 未提供 description。"}</div>
       <h3>应用可见性</h3>
