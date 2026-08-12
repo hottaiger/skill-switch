@@ -224,17 +224,18 @@ export default function App() {
     } finally { setBusyKey(undefined); }
   };
 
-  const refreshSettings = async () => {
-    const next = await api.getSettings();
-    setSettings(next);
-  };
-
   const renameCustomCategory = async (previousName: string, nextName: string) => {
     const key = `custom-category:${previousName}`;
     setBusyKey(key); setMessage(undefined);
     try {
       setSnapshot(await api.renameCustomCategory(previousName, nextName));
-      await refreshSettings();
+      setSettings((current) => current && {
+        ...current,
+        settings: {
+          ...current.settings,
+          customCategories: current.settings.customCategories.map((category) => category === previousName ? nextName : category),
+        },
+      });
     } catch (error) {
       setMessage({ type: "error", text: errorMessage(error) });
     } finally { setBusyKey(undefined); }
@@ -245,7 +246,13 @@ export default function App() {
     setBusyKey(key); setMessage(undefined);
     try {
       setSnapshot(await api.deleteCustomCategory(name));
-      await refreshSettings();
+      setSettings((current) => current && {
+        ...current,
+        settings: {
+          ...current.settings,
+          customCategories: current.settings.customCategories.filter((category) => category !== name),
+        },
+      });
     } catch (error) {
       setMessage({ type: "error", text: errorMessage(error) });
     } finally { setBusyKey(undefined); }

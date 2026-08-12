@@ -23,7 +23,7 @@ export function SettingsPage({ snapshot, skills, busyKey, onSave, onToggleSuppor
   const managedApps = MANAGED_APPS.filter((app) => appSupport?.[app]);
   const nativeApps = NATIVE_APPS.filter((app) => appSupport?.[app]);
   const customCategories = snapshot?.settings.customCategories || [];
-  const categoryUsage = (category: string) => skills?.skills.filter((skill) => skill.category === category).length || 0;
+  const categoryUsage = (category: string) => skills && skills.skills.filter((skill) => skill.category === category).length;
   const customCategoryBusy = Boolean(busyKey);
   return (
     <section className="secondary-page settings-page">
@@ -57,9 +57,9 @@ export function SettingsPage({ snapshot, skills, busyKey, onSave, onToggleSuppor
             const draft = renameDrafts[category] ?? category;
             const categoryBusy = customCategoryBusy || busyKey === `custom-category:${category}`;
             return <div className="custom-category-row" key={category}>
-              <div className="custom-category-main"><p>{category} · 使用于 {usage} 个 Skill</p><input aria-label={`重命名 ${category}`} value={draft} disabled={categoryBusy} onChange={(event) => setRenameDrafts((current) => ({ ...current, [category]: event.target.value }))} /></div>
-              <div className="custom-category-actions"><button className="ghost-button" disabled={categoryBusy || !draft.trim() || draft.trim() === category} onClick={() => onRenameCustomCategory(category, draft.trim())}>重命名 {category}</button><button className="ghost-button danger-text" disabled={categoryBusy} onClick={() => usage > 0 ? setConfirmingDeletion(category) : onDeleteCustomCategory(category)}>删除 {category}</button></div>
-              {confirmingDeletion === category && <div className="confirm-custom-category-delete" role="alertdialog" aria-label={`删除 ${category}`} aria-describedby={`delete-category-warning-${category}`}>
+              <div className="custom-category-main"><p>{usage === undefined ? `${category} · 使用情况待确认` : `${category} · 使用于 ${usage} 个 Skill`}</p><input aria-label={`重命名 ${category}`} value={draft} disabled={categoryBusy} onChange={(event) => setRenameDrafts((current) => ({ ...current, [category]: event.target.value }))} /></div>
+              <div className="custom-category-actions"><button className="ghost-button" disabled={categoryBusy || !draft.trim() || draft.trim() === category} onClick={() => onRenameCustomCategory(category, draft.trim())}>重命名 {category}</button><button className="ghost-button danger-text" disabled={categoryBusy} onClick={() => usage === undefined || usage > 0 ? setConfirmingDeletion(category) : onDeleteCustomCategory(category)}>删除 {category}</button></div>
+              {confirmingDeletion === category && <div className="confirm-custom-category-delete" role="group" aria-label={`删除 ${category} 确认`} aria-describedby={`delete-category-warning-${category}`}>
                 <p id={`delete-category-warning-${category}`}>引用此分类的 Skills 将变为未分类。</p>
                 <div className="confirm-actions"><button className="ghost-button" disabled={categoryBusy} onClick={() => setConfirmingDeletion(undefined)}>取消</button><button className="danger-button" disabled={categoryBusy} onClick={() => onDeleteCustomCategory(category)}>确认移至未分类</button></div>
               </div>}

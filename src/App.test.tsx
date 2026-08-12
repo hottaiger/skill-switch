@@ -431,7 +431,7 @@ it("creates a reusable custom category from the inspector", async () => {
   expect(within(otherSkillSelector).getByRole("option", { name: "瓜子FE" })).toBeInTheDocument();
 });
 
-it("renames a custom category from Settings and refreshes its usage", async () => {
+it("keeps the renamed category list correct when a Settings refresh fails", async () => {
   const user = userEvent.setup();
   const categorizedSnapshot = structuredClone(snapshot);
   categorizedSnapshot.skills[0].category = "瓜子FE";
@@ -445,17 +445,13 @@ it("renames a custom category from Settings and refreshes its usage", async () =
     ...settings,
     settings: { ...settings.settings, customCategories: ["瓜子FE"] },
   };
-  const renamedSettings = {
-    ...categorizedSettings,
-    settings: { ...categorizedSettings.settings, customCategories: ["新瓜子FE"] },
-  };
-  let activeSettings = categorizedSettings;
+  let settingsRequests = 0;
   mocks.scanSkills.mockResolvedValue(categorizedSnapshot);
-  mocks.getSettings.mockImplementation(() => Promise.resolve(activeSettings));
-  mocks.renameCustomCategory.mockImplementation(() => {
-    activeSettings = renamedSettings;
-    return Promise.resolve(renamedSnapshot);
+  mocks.getSettings.mockImplementation(() => {
+    settingsRequests += 1;
+    return settingsRequests === 1 ? Promise.resolve(categorizedSettings) : Promise.reject({ message: "刷新失败" });
   });
+  mocks.renameCustomCategory.mockResolvedValue(renamedSnapshot);
   render(<App />);
   await user.click(await screen.findByRole("button", { name: /设置/ }));
   expect(await screen.findByText("瓜子FE · 使用于 2 个 Skill")).toBeVisible();
@@ -465,6 +461,8 @@ it("renames a custom category from Settings and refreshes its usage", async () =
   await user.click(screen.getByRole("button", { name: "重命名 瓜子FE" }));
   await waitFor(() => expect(mocks.renameCustomCategory).toHaveBeenCalledWith("瓜子FE", "新瓜子FE"));
   expect(await screen.findByText("新瓜子FE · 使用于 2 个 Skill")).toBeVisible();
+  expect(mocks.getSettings).toHaveBeenCalledTimes(1);
+  expect(screen.queryByText("刷新失败")).not.toBeInTheDocument();
 });
 
 it("confirms moving referenced custom-category Skills to uncategorized before deletion", async () => {
@@ -483,26 +481,42 @@ it("confirms moving referenced custom-category Skills to uncategorized before de
     ...settings,
     settings: { ...settings.settings, customCategories: ["瓜子FE"] },
   };
-  const deletedSettings = {
-    ...categorizedSettings,
-    settings: { ...categorizedSettings.settings, customCategories: [] },
-  };
-  let activeSettings = categorizedSettings;
+  let settingsRequests = 0;
   mocks.scanSkills.mockResolvedValue(categorizedSnapshot);
-  mocks.getSettings.mockImplementation(() => Promise.resolve(activeSettings));
-  mocks.deleteCustomCategory.mockImplementation(() => {
-    activeSettings = deletedSettings;
-    return Promise.resolve(deletedSnapshot);
+  mocks.getSettings.mockImplementation(() => {
+    settingsRequests += 1;
+    return settingsRequests === 1 ? Promise.resolve(categorizedSettings) : Promise.reject({ message: "刷新失败" });
   });
+  mocks.deleteCustomCategory.mockResolvedValue(deletedSnapshot);
   render(<App />);
   await user.click(await screen.findByRole("button", { name: /设置/ }));
   expect(await screen.findByText("瓜子FE · 使用于 2 个 Skill")).toBeVisible();
   await user.click(screen.getByRole("button", { name: "删除 瓜子FE" }));
-  const confirmation = await screen.findByRole("alertdialog", { name: "删除 瓜子FE" });
+  const confirmation = await screen.findByRole("group", { name: "删除 瓜子FE 确认" });
   expect(within(confirmation).getByText(/引用此分类的 Skills 将变为未分类/)).toBeVisible();
   await user.click(within(confirmation).getByRole("button", { name: "确认移至未分类" }));
   await waitFor(() => expect(mocks.deleteCustomCategory).toHaveBeenCalledWith("瓜子FE"));
   expect(screen.queryByText("瓜子FE · 使用于 2 个 Skill")).not.toBeInTheDocument();
+  expect(mocks.getSettings).toHaveBeenCalledTimes(1);
+  expect(screen.queryByText("刷新失败")).not.toBeInTheDocument();
+});
+
+it("requires confirmation before deleting while Skill usage is unknown", async () => {
+  const user = userEvent.setup();
+  const categorizedSettings = {
+    ...settings,
+    settings: { ...settings.settings, customCategories: ["瓜子FE"] },
+  };
+  mocks.scanSkills.mockRejectedValue({ message: "扫描失败" });
+  mocks.getSettings.mockResolvedValue(categorizedSettings);
+  mocks.deleteCustomCategory.mockResolvedValue(snapshot);
+  render(<App />);
+  await user.click(await screen.findByRole("button", { name: /设置/ }));
+  expect(await screen.findByText("瓜子FE · 使用情况待确认")).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "删除 瓜子FE" }));
+  const confirmation = await screen.findByRole("group", { name: "删除 瓜子FE 确认" });
+  expect(within(confirmation).getByRole("button", { name: "确认移至未分类" })).toBeVisible();
+  expect(mocks.deleteCustomCategory).not.toHaveBeenCalled();
 });
 
 it("deletes an unused custom category without confirmation", async () => {
@@ -511,17 +525,13 @@ it("deletes an unused custom category without confirmation", async () => {
     ...settings,
     settings: { ...settings.settings, customCategories: ["闲置"] },
   };
-  let activeSettings = categorizedSettings;
-  mocks.getSettings.mockImplementation(() => Promise.resolve(activeSettings));
-  mocks.deleteCustomCategory.mockImplementation(() => {
-    activeSettings = settings;
-    return Promise.resolve(snapshot);
-  });
+  mocks.getSettings.mockResolvedValue(categorizedSettings);
+  mocks.deleteCustomCategory.mockResolvedValue(snapshot);
   render(<App />);
   await user.click(await screen.findByRole("button", { name: /设置/ }));
   expect(await screen.findByText("闲置 · 使用于 0 个 Skill")).toBeVisible();
   await user.click(screen.getByRole("button", { name: "删除 闲置" }));
-  expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+  expect(screen.queryByRole("group", { name: /删除.*确认/ })).not.toBeInTheDocument();
   await waitFor(() => expect(mocks.deleteCustomCategory).toHaveBeenCalledWith("闲置"));
 });
 
