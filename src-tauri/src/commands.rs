@@ -432,22 +432,29 @@ mod tests {
     }
 
     #[test]
-    fn custom_category_commands_reject_ui_sentinels() {
+    fn custom_category_commands_reject_all_ui_sentinels() {
         let home = tempfile::tempdir().unwrap();
         create_custom_category_at(home.path(), "瓜子FE".into()).unwrap();
 
-        let create_error =
-            create_custom_category_at(home.path(), "__new_category__".into()).unwrap_err();
-        let rename_error =
-            rename_custom_category_at(home.path(), "瓜子FE".into(), "__uncategorized__".into())
-                .unwrap_err();
-        let set_error =
-            set_skill_category_at(home.path(), "local-skill".into(), "__new_category__".into())
-                .unwrap_err();
+        for sentinel in [
+            "__new_category__",
+            "__uncategorized__",
+            "__legacy_category__",
+            "__source_categories__",
+            "__custom_categories__",
+        ] {
+            let create_error = create_custom_category_at(home.path(), sentinel.into()).unwrap_err();
+            let rename_error =
+                rename_custom_category_at(home.path(), "瓜子FE".into(), sentinel.into())
+                    .unwrap_err();
+            let set_error =
+                set_skill_category_at(home.path(), "local-skill".into(), sentinel.into())
+                    .unwrap_err();
 
-        assert_eq!(create_error.code, ErrorCode::InvalidPath);
-        assert_eq!(rename_error.code, ErrorCode::InvalidPath);
-        assert_eq!(set_error.code, ErrorCode::InvalidPath);
+            assert_eq!(create_error.code, ErrorCode::InvalidPath);
+            assert_eq!(rename_error.code, ErrorCode::InvalidPath);
+            assert_eq!(set_error.code, ErrorCode::InvalidPath);
+        }
     }
 
     #[test]

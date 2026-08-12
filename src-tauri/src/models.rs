@@ -147,7 +147,13 @@ pub const BUILT_IN_CATEGORIES: [&str; 8] = [
     UNCATEGORIZED,
 ];
 
-pub const CATEGORY_SENTINELS: [&str; 2] = ["__new_category__", "__uncategorized__"];
+pub const CATEGORY_SENTINELS: [&str; 5] = [
+    "__new_category__",
+    "__uncategorized__",
+    "__legacy_category__",
+    "__source_categories__",
+    "__custom_categories__",
+];
 
 pub fn is_category_sentinel(category: &str) -> bool {
     CATEGORY_SENTINELS.contains(&category)
