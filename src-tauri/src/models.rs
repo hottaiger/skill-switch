@@ -98,8 +98,25 @@ pub const COMET_SKILLS: [&str; 11] = [
     "comet-verify",
 ];
 
+/// 来自 abhigyanpatwari/GitNexus 的 gitnexus/skills 目录。
+pub const GITNEXUS_SKILLS: [&str; 12] = [
+    "gitnexus-cli",
+    "gitnexus-debugging",
+    "gitnexus-exploring",
+    "gitnexus-guide",
+    "gitnexus-impact-analysis",
+    "gitnexus-lfg",
+    "gitnexus-pdg-query",
+    "gitnexus-plan",
+    "gitnexus-refactoring",
+    "gitnexus-review",
+    "gitnexus-taint-analysis",
+    "gitnexus-work",
+];
+
 pub const MATT_POCOCK_CATEGORY: &str = "Matt Pocock";
 pub const COMET_CATEGORY: &str = "Comet";
+pub const GITNEXUS_CATEGORY: &str = "GitNexus";
 pub const SUPERPOWERS_CATEGORY: &str = "superpowers";
 pub const OPENSPEC_CATEGORY: &str = "openspec";
 pub const UNCATEGORIZED: &str = "未分类";
@@ -131,6 +148,9 @@ pub fn resolve_category(skill_name: &str, user_categories: &BTreeMap<String, Str
     }
     if COMET_SKILLS.contains(&skill_name) {
         return COMET_CATEGORY.into();
+    }
+    if GITNEXUS_SKILLS.contains(&skill_name) {
+        return GITNEXUS_CATEGORY.into();
     }
     UNCATEGORIZED.into()
 }
@@ -168,6 +188,14 @@ mod category_tests {
     #[test]
     fn comet_skills_use_the_comet_category() {
         assert_eq!(resolve_category("comet-native", &BTreeMap::new()), "Comet");
+    }
+
+    #[test]
+    fn gitnexus_skills_use_the_gitnexus_category() {
+        assert_eq!(
+            resolve_category("gitnexus-impact-analysis", &BTreeMap::new()),
+            "GitNexus"
+        );
     }
 
     #[test]

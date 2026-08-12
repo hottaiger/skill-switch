@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { ALL_APPS, APP_LABELS, isNativeApp, type AppKind, type AppSupport, type SkillRecord } from "../types";
 
-const BUILT_IN_CATEGORIES = ["Matt Pocock", "Comet", "superpowers", "openspec"];
+const BUILT_IN_CATEGORIES = ["Matt Pocock", "Comet", "GitNexus", "superpowers", "openspec"];
 
 function categoryRule(category: string) {
   if (category === "Matt Pocock") return "Matt Pocock skills";
   if (category === "Comet") return "rpamis/comet · assets/skills-zh";
+  if (category === "GitNexus") return "abhigyanpatwari/GitNexus · gitnexus/skills";
   if (category === "superpowers") return "obra/superpowers";
   if (category === "openspec") return "Fission-AI/OpenSpec";
   return "未命中内置来源规则";
