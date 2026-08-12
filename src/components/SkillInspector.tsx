@@ -39,7 +39,7 @@ function categorySource(category: string) {
 }
 
 function categorySelection(category: string, source: SkillRecord["categorySource"]) {
-  if (source === "auto") return "__auto__";
+  if (source === "auto" && category === "未分类") return "__uncategorized__";
   return BUILT_IN_CATEGORIES.includes(category) ? category : "__custom__";
 }
 
@@ -67,7 +67,7 @@ export function SkillInspector({ skill, busyKey, appSupport, onClose, onToggle, 
   const [confirming, setConfirming] = useState(false);
   const [reason, setReason] = useState("");
   const [categoryDraft, setCategoryDraft] = useState("");
-  const [categoryMode, setCategoryMode] = useState("__auto__");
+  const [categoryMode, setCategoryMode] = useState("__uncategorized__");
   useEffect(() => {
     if (!skill) return;
     setCategoryDraft(skill.category);
@@ -92,12 +92,12 @@ export function SkillInspector({ skill, busyKey, appSupport, onClose, onToggle, 
             onChange={(event) => {
               const value = event.target.value;
               setCategoryMode(value);
-              if (value === "__auto__" || value === "__custom__") setCategoryDraft("");
+              if (value === "__uncategorized__" || value === "__custom__") setCategoryDraft("");
               else setCategoryDraft(value);
             }}
             disabled={savingCategory}
           >
-            <option value="__auto__">默认分类（{skill.category}）</option>
+            {skill.categorySource === "auto" && skill.category === "未分类" && <option value="__uncategorized__">未分类</option>}
             {BUILT_IN_CATEGORIES.map((category) => <option value={category} key={category}>{category}</option>)}
             <option value="__custom__">自定义分类…</option>
           </select>
@@ -112,7 +112,7 @@ export function SkillInspector({ skill, busyKey, appSupport, onClose, onToggle, 
           )}
           <button
             className="ghost-button"
-            disabled={savingCategory || (draft === skill.category && skill.categorySource === "manual")}
+            disabled={savingCategory || categoryMode === "__uncategorized__" || !draft.trim() || draft.trim() === skill.category}
             onClick={() => onSetCategory(skill.name, draft.trim())}
           >
             {savingCategory ? "保存中" : "保存"}

@@ -343,6 +343,33 @@ it("shows a GitHub source link without exposing automatic recognition", async ()
   expect(screen.queryByText(/自动识别/)).not.toBeInTheDocument();
 });
 
+it("shows an automatically categorized skill only once in the category selector", async () => {
+  const user = userEvent.setup();
+  const cometSnapshot = structuredClone(snapshot);
+  const skill = cometSnapshot.skills.find((item) => item.name === "implement");
+  if (!skill) throw new Error("implement fixture missing");
+  skill.category = "Comet";
+  mocks.scanSkills.mockResolvedValue(cometSnapshot);
+  render(<App />);
+  await user.click(await screen.findByRole("option", { name: "implement" }));
+  const selector = screen.getByRole("combobox", { name: "Skill 分类" });
+  expect(within(selector).getAllByRole("option", { name: "Comet" })).toHaveLength(1);
+  expect(within(selector).queryByRole("option", { name: /默认分类/ })).not.toBeInTheDocument();
+});
+
+it("assigns a category to an uncategorized skill", async () => {
+  const user = userEvent.setup();
+  mocks.setSkillCategory.mockResolvedValue(snapshot);
+  render(<App />);
+  await user.click(await screen.findByRole("option", { name: "detail-koala-ui" }));
+  const selector = screen.getByRole("combobox", { name: "Skill 分类" });
+  expect(selector).toHaveValue("__uncategorized__");
+  expect(screen.getByRole("button", { name: "保存" })).toBeDisabled();
+  await user.selectOptions(selector, "Comet");
+  await user.click(screen.getByRole("button", { name: "保存" }));
+  await waitFor(() => expect(mocks.setSkillCategory).toHaveBeenCalledWith("detail-koala-ui", "Comet"));
+});
+
 it("restores a manual category to the default category", async () => {
   const user = userEvent.setup();
   const manualSnapshot = structuredClone(snapshot);
