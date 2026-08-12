@@ -38,19 +38,22 @@ function categorySource(category: string) {
   return CATEGORY_SOURCES[category as keyof typeof CATEGORY_SOURCES];
 }
 
-function categorySelection(category: string, source: SkillRecord["categorySource"]) {
+function categorySelection(category: string, source: SkillRecord["categorySource"], customCategories: string[]) {
   if (source === "auto" && category === "未分类") return "__uncategorized__";
-  return BUILT_IN_CATEGORIES.includes(category) ? category : "__custom__";
+  if (BUILT_IN_CATEGORIES.includes(category) || customCategories.includes(category)) return category;
+  return "__legacy_category__";
 }
 
 interface SkillInspectorProps {
   skill?: SkillRecord;
   busyKey?: string;
   appSupport: AppSupport;
+  customCategories: string[];
   onClose: () => void;
   onToggle: (app: AppKind, enabled: boolean) => void;
   onUninstall: (reason: string) => void;
   onSetCategory: (skillName: string, category: string) => void;
+  onCreateCategory: (skillName: string, category: string) => void;
 }
 
 function formatSize(bytes: number) {
@@ -63,7 +66,7 @@ function formatTime(ms: number) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-export function SkillInspector({ skill, busyKey, appSupport, onClose, onToggle, onUninstall, onSetCategory }: SkillInspectorProps) {
+export function SkillInspector({ skill, busyKey, appSupport, customCategories, onClose, onToggle, onUninstall, onSetCategory, onCreateCategory }: SkillInspectorProps) {
   const [confirming, setConfirming] = useState(false);
   const [reason, setReason] = useState("");
   const [categoryDraft, setCategoryDraft] = useState("");
@@ -71,12 +74,14 @@ export function SkillInspector({ skill, busyKey, appSupport, onClose, onToggle, 
   useEffect(() => {
     if (!skill) return;
     setCategoryDraft(skill.category);
-    setCategoryMode(categorySelection(skill.category, skill.categorySource));
-  }, [skill?.name, skill?.category, skill?.categorySource]);
+    setCategoryMode(categorySelection(skill.category, skill.categorySource, customCategories));
+  }, [skill?.name, skill?.category, skill?.categorySource, customCategories]);
   if (!skill) return null;
   const uninstalling = busyKey === `${skill.name}:uninstall`;
   const savingCategory = busyKey === `${skill.name}:category`;
   const draft = categoryDraft;
+  const availableCustomCategories = Array.from(new Set(customCategories.filter((category) => category !== "未分类" && !BUILT_IN_CATEGORIES.includes(category))));
+  const canSaveExistingCategory = (BUILT_IN_CATEGORIES.includes(categoryMode) || availableCustomCategories.includes(categoryMode)) && draft.trim() !== skill.category;
   const source = skill.categorySource === "auto" ? categorySource(skill.category) : undefined;
   return (
     <aside className="inspector" role="dialog" aria-label="Skill 详情">
@@ -92,18 +97,22 @@ export function SkillInspector({ skill, busyKey, appSupport, onClose, onToggle, 
             onChange={(event) => {
               const value = event.target.value;
               setCategoryMode(value);
-              if (value === "__uncategorized__" || value === "__custom__") setCategoryDraft("");
+              if (value === "__uncategorized__" || value === "__new_category__") setCategoryDraft("");
               else setCategoryDraft(value);
             }}
             disabled={savingCategory}
           >
             {skill.categorySource === "auto" && skill.category === "未分类" && <option value="__uncategorized__">未分类</option>}
+            {categoryMode === "__legacy_category__" && <option value="__legacy_category__" disabled>{skill.category}</option>}
+            <option value="__source_categories__" disabled>来源分类</option>
             {BUILT_IN_CATEGORIES.map((category) => <option value={category} key={category}>{category}</option>)}
-            <option value="__custom__">自定义分类…</option>
+            <option value="__custom_categories__" disabled>自定义分类</option>
+            {availableCustomCategories.map((category) => <option value={category} key={category}>{category}</option>)}
+            <option value="__new_category__">新建分类…</option>
           </select>
-          {categoryMode === "__custom__" && (
+          {categoryMode === "__new_category__" && (
             <input
-              aria-label="自定义分类"
+              aria-label="新建分类"
               value={draft}
               onChange={(event) => setCategoryDraft(event.target.value)}
               placeholder="例如：项目专用"
@@ -112,8 +121,8 @@ export function SkillInspector({ skill, busyKey, appSupport, onClose, onToggle, 
           )}
           <button
             className="ghost-button"
-            disabled={savingCategory || categoryMode === "__uncategorized__" || !draft.trim() || draft.trim() === skill.category}
-            onClick={() => onSetCategory(skill.name, draft.trim())}
+            disabled={savingCategory || !draft.trim() || (categoryMode === "__new_category__" ? draft.trim() === skill.category : !canSaveExistingCategory)}
+            onClick={() => categoryMode === "__new_category__" ? onCreateCategory(skill.name, draft.trim()) : onSetCategory(skill.name, draft.trim())}
           >
             {savingCategory ? "保存中" : "保存"}
           </button>

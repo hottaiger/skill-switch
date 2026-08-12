@@ -36,6 +36,8 @@ export const api = {
     invoke<SettingsSnapshot>("set_app_support", { app, enabled }),
   setSkillCategory: (skillName: string, category: string) =>
     invoke<ScanSnapshot>("set_skill_category", { skillName, category }),
+  createCustomCategory: (name: string) =>
+    invoke<SettingsSnapshot>("create_custom_category", { name }),
   updateUiPreferences: (lastSection: Section, libraryView: LibraryView) =>
     invoke<SettingsSnapshot>("update_ui_preferences", { lastSection, libraryView }),
   openSkillWith: (skillName: string, opener: SkillOpener) =>

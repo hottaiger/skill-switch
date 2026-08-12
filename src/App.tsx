@@ -212,6 +212,18 @@ export default function App() {
     } finally { setBusyKey(undefined); }
   };
 
+  const createCustomCategory = async (skillName: string, name: string) => {
+    const key = `${skillName}:category`;
+    setBusyKey(key); setMessage(undefined);
+    try {
+      const nextSettings = await api.createCustomCategory(name);
+      setSettings(nextSettings);
+      setSnapshot(await api.setSkillCategory(skillName, name));
+    } catch (error) {
+      setMessage({ type: "error", text: errorMessage(error) });
+    } finally { setBusyKey(undefined); }
+  };
+
   const savePath = async (app: AppKind, path: string) => {
     setBusyKey(app); setMessage(undefined);
     try {
@@ -253,7 +265,7 @@ export default function App() {
       </main>
       {section === "library" && selectedSkill && <>
         <button className="inspector-backdrop" aria-label="关闭详情遮罩" onClick={() => setSelectedName(undefined)} />
-        <SkillInspector skill={selectedSkill} busyKey={busyKey} appSupport={appSupport} onClose={() => setSelectedName(undefined)} onToggle={(app, enabled) => void toggleVisibility(app, enabled)} onUninstall={(reason) => void uninstall(reason)} onSetCategory={(name, category) => void setSkillCategory(name, category)} />
+        <SkillInspector skill={selectedSkill} busyKey={busyKey} appSupport={appSupport} customCategories={settings?.settings.customCategories || []} onClose={() => setSelectedName(undefined)} onToggle={(app, enabled) => void toggleVisibility(app, enabled)} onUninstall={(reason) => void uninstall(reason)} onSetCategory={(name, category) => void setSkillCategory(name, category)} onCreateCategory={(name, category) => void createCustomCategory(name, category)} />
       </>}
     </div>
   );

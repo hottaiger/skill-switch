@@ -21,6 +21,7 @@ import type { ScanSnapshot, SettingsSnapshot } from "./types";
   openSkillWith: vi.fn(),
   openBackupWith: vi.fn(),
   setSkillCategory: vi.fn(),
+  createCustomCategory: vi.fn(),
 }));
 
 vi.mock("./api", () => ({ api: mocks }));
@@ -113,6 +114,7 @@ const settings: SettingsSnapshot = {
     lastSection: "library",
     libraryView: "list",
     skillCategories: {},
+    customCategories: [],
   },
   paths: {
     claude: "/Users/test/.claude/skills",
@@ -385,17 +387,46 @@ it("restores a manual category to the default category", async () => {
   await waitFor(() => expect(mocks.setSkillCategory).toHaveBeenCalledWith("implement", ""));
 });
 
-it("saves a manual category override from the inspector", async () => {
+it("saves a stored custom category from the inspector", async () => {
   const user = userEvent.setup();
+  mocks.getSettings.mockResolvedValue({
+    ...settings,
+    settings: { ...settings.settings, customCategories: ["前端"] },
+  });
   mocks.setSkillCategory.mockResolvedValue(snapshot);
   render(<App />);
   await user.click(await screen.findByRole("option", { name: "detail-koala-ui" }));
-  await user.selectOptions(screen.getByRole("combobox", { name: "Skill 分类" }), "__custom__");
-  const input = screen.getByRole("textbox", { name: "自定义分类" });
-  await user.type(input, "前端");
-  expect(input).toHaveValue("前端");
+  const selector = screen.getByRole("combobox", { name: "Skill 分类" });
+  expect(within(selector).getByRole("option", { name: "来源分类" })).toBeDisabled();
+  expect(within(selector).getByRole("option", { name: "自定义分类" })).toBeDisabled();
+  await user.selectOptions(selector, "前端");
   await user.click(screen.getByRole("button", { name: "保存" }));
   await waitFor(() => expect(mocks.setSkillCategory).toHaveBeenCalledWith("detail-koala-ui", "前端"));
+});
+
+it("creates a reusable custom category from the inspector", async () => {
+  const user = userEvent.setup();
+  const categorizedSnapshot = structuredClone(snapshot);
+  const skill = categorizedSnapshot.skills.find((item) => item.name === "detail-koala-ui");
+  if (!skill) throw new Error("detail-koala-ui fixture missing");
+  skill.category = "瓜子FE";
+  skill.categorySource = "manual";
+  mocks.createCustomCategory.mockResolvedValue({
+    ...settings,
+    settings: { ...settings.settings, customCategories: ["瓜子FE"] },
+  });
+  mocks.setSkillCategory.mockResolvedValue(categorizedSnapshot);
+  render(<App />);
+  await user.click(await screen.findByRole("option", { name: "detail-koala-ui" }));
+  await user.selectOptions(screen.getByRole("combobox", { name: "Skill 分类" }), "__new_category__");
+  await user.type(screen.getByRole("textbox", { name: "新建分类" }), "瓜子FE");
+  await user.click(screen.getByRole("button", { name: "保存" }));
+  await waitFor(() => expect(mocks.createCustomCategory).toHaveBeenCalledWith("瓜子FE"));
+  await waitFor(() => expect(mocks.setSkillCategory).toHaveBeenCalledWith("detail-koala-ui", "瓜子FE"));
+  await user.click(screen.getByRole("button", { name: "关闭详情" }));
+  await user.click(screen.getByRole("option", { name: "using-superpowers" }));
+  const otherSkillSelector = screen.getByRole("combobox", { name: "Skill 分类" });
+  expect(within(otherSkillSelector).getByRole("option", { name: "瓜子FE" })).toBeInTheDocument();
 });
 
 it("saves editable managed-app paths while native paths remain fixed", async () => {

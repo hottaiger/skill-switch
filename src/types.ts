@@ -53,6 +53,7 @@ export interface Settings {
   lastSection: Section;
   libraryView: LibraryView;
   skillCategories: Record<string, string>;
+  customCategories: string[];
 }
 
 export interface SettingsSnapshot {
