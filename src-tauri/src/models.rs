@@ -147,6 +147,16 @@ pub const BUILT_IN_CATEGORIES: [&str; 8] = [
     UNCATEGORIZED,
 ];
 
+pub const CATEGORY_SENTINELS: [&str; 2] = ["__new_category__", "__uncategorized__"];
+
+pub fn is_category_sentinel(category: &str) -> bool {
+    CATEGORY_SENTINELS.contains(&category)
+}
+
+pub fn is_reserved_category(category: &str) -> bool {
+    BUILT_IN_CATEGORIES.contains(&category) || is_category_sentinel(category)
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum CategorySource {
@@ -232,7 +242,10 @@ mod category_tests {
 
     #[test]
     fn obsidian_skills_use_the_obsidian_category() {
-        assert_eq!(resolve_category("obsidian-markdown", &BTreeMap::new()), "Obsidian");
+        assert_eq!(
+            resolve_category("obsidian-markdown", &BTreeMap::new()),
+            "Obsidian"
+        );
     }
 
     #[test]
@@ -382,6 +395,26 @@ impl Default for Settings {
             skill_categories: BTreeMap::new(),
             custom_categories: Vec::new(),
         }
+    }
+}
+
+impl Settings {
+    pub fn normalize_custom_categories(&mut self) {
+        let mut normalized = Vec::new();
+        for category in self
+            .custom_categories
+            .iter()
+            .chain(self.skill_categories.values())
+        {
+            let category = category.trim();
+            if !category.is_empty()
+                && !is_reserved_category(category)
+                && !normalized.iter().any(|existing| existing == category)
+            {
+                normalized.push(category.into());
+            }
+        }
+        self.custom_categories = normalized;
     }
 }
 

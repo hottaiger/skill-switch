@@ -4,8 +4,9 @@ use crate::error::{CommandError, ErrorCode};
 use crate::import_service;
 use crate::link_manager;
 use crate::models::{
-    AppKind, BackupRecord, ImportCandidate, ImportExecution, ImportRequest, ImportResult,
-    ScanSnapshot, Settings, SettingsSnapshot, VisibilityState, BUILT_IN_CATEGORIES,
+    is_category_sentinel, is_reserved_category, AppKind, BackupRecord, ImportCandidate,
+    ImportExecution, ImportRequest, ImportResult, ScanSnapshot, Settings, SettingsSnapshot,
+    VisibilityState,
 };
 use crate::paths::{app_root, current_home};
 use std::collections::BTreeMap;
@@ -47,27 +48,13 @@ fn normalized_category_name(name: &str) -> Result<String, CommandError> {
             "分类名称不能为空",
         ));
     }
-    if BUILT_IN_CATEGORIES.contains(&normalized) {
+    if is_reserved_category(normalized) {
         return Err(CommandError::new(
             ErrorCode::InvalidPath,
             "内置分类不能作为自定义分类",
         ));
     }
     Ok(normalized.into())
-}
-
-fn normalize_custom_categories(categories: &mut Vec<String>) {
-    let mut normalized = Vec::new();
-    for category in std::mem::take(categories) {
-        let category = category.trim();
-        if !category.is_empty()
-            && !BUILT_IN_CATEGORIES.contains(&category)
-            && !normalized.iter().any(|existing| existing == category)
-        {
-            normalized.push(category.into());
-        }
-    }
-    *categories = normalized;
 }
 
 fn scan_snapshot(home: &Path, settings: &Settings) -> Result<ScanSnapshot, CommandError> {
@@ -87,10 +74,14 @@ fn set_skill_category_at(
     if trimmed.is_empty() {
         settings.skill_categories.remove(&skill_name);
     } else {
+        if is_category_sentinel(trimmed) {
+            return Err(CommandError::new(ErrorCode::InvalidPath, "分类名称无效"));
+        }
         settings
             .skill_categories
             .insert(skill_name, trimmed.to_string());
     }
+    settings.normalize_custom_categories();
     save_settings(home, &settings)?;
     scan_snapshot(home, &settings)
 }
@@ -98,7 +89,7 @@ fn set_skill_category_at(
 fn create_custom_category_at(home: &Path, name: String) -> Result<SettingsSnapshot, CommandError> {
     let name = normalized_category_name(&name)?;
     let (mut settings, _) = loaded_settings(home)?;
-    normalize_custom_categories(&mut settings.custom_categories);
+    settings.normalize_custom_categories();
     if !settings.custom_categories.contains(&name) {
         settings.custom_categories.push(name);
     }
@@ -114,7 +105,7 @@ fn rename_custom_category_at(
     let previous_name = previous_name.trim();
     let next_name = normalized_category_name(&next_name)?;
     let (mut settings, _) = loaded_settings(home)?;
-    normalize_custom_categories(&mut settings.custom_categories);
+    settings.normalize_custom_categories();
     if !settings
         .custom_categories
         .iter()
@@ -130,12 +121,12 @@ fn rename_custom_category_at(
             *category = next_name.clone();
         }
     }
-    normalize_custom_categories(&mut settings.custom_categories);
     for category in settings.skill_categories.values_mut() {
         if category == previous_name {
             *category = next_name.clone();
         }
     }
+    settings.normalize_custom_categories();
     save_settings(home, &settings)?;
     scan_snapshot(home, &settings)
 }
@@ -143,7 +134,7 @@ fn rename_custom_category_at(
 fn delete_custom_category_at(home: &Path, name: String) -> Result<ScanSnapshot, CommandError> {
     let name = name.trim();
     let (mut settings, _) = loaded_settings(home)?;
-    normalize_custom_categories(&mut settings.custom_categories);
+    settings.normalize_custom_categories();
     let original_count = settings.custom_categories.len();
     settings
         .custom_categories
@@ -438,6 +429,43 @@ mod tests {
         let error = create_custom_category_at(home.path(), UNCATEGORIZED.into()).unwrap_err();
 
         assert_eq!(error.code, ErrorCode::InvalidPath);
+    }
+
+    #[test]
+    fn custom_category_commands_reject_ui_sentinels() {
+        let home = tempfile::tempdir().unwrap();
+        create_custom_category_at(home.path(), "瓜子FE".into()).unwrap();
+
+        let create_error =
+            create_custom_category_at(home.path(), "__new_category__".into()).unwrap_err();
+        let rename_error =
+            rename_custom_category_at(home.path(), "瓜子FE".into(), "__uncategorized__".into())
+                .unwrap_err();
+        let set_error =
+            set_skill_category_at(home.path(), "local-skill".into(), "__new_category__".into())
+                .unwrap_err();
+
+        assert_eq!(create_error.code, ErrorCode::InvalidPath);
+        assert_eq!(rename_error.code, ErrorCode::InvalidPath);
+        assert_eq!(set_error.code, ErrorCode::InvalidPath);
+    }
+
+    #[test]
+    fn setting_a_new_manual_category_makes_it_reusable() {
+        let home = tempfile::tempdir().unwrap();
+        create_skill(home.path(), "local-skill");
+
+        let snapshot =
+            set_skill_category_at(home.path(), "local-skill".into(), " 瓜子FE ".into()).unwrap();
+
+        assert_eq!(snapshot.skills[0].category, "瓜子FE");
+        assert_eq!(
+            load_settings(home.path())
+                .unwrap()
+                .settings
+                .custom_categories,
+            vec!["瓜子FE"]
+        );
     }
 
     #[test]

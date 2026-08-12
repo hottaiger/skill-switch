@@ -15,10 +15,13 @@ pub fn load_settings(home: &Path) -> Result<SettingsLoad, CommandError> {
     }
     let bytes = fs::read(&path).map_err(|error| CommandError::io("读取配置失败", &path, &error))?;
     match serde_json::from_slice::<Settings>(&bytes) {
-        Ok(settings) if settings.schema_version == 1 => Ok(SettingsLoad {
-            settings,
-            warning: None,
-        }),
+        Ok(mut settings) if settings.schema_version == 1 => {
+            settings.normalize_custom_categories();
+            Ok(SettingsLoad {
+                settings,
+                warning: None,
+            })
+        }
         Ok(_) => Ok(SettingsLoad {
             settings: Settings::default(),
             warning: Some(
@@ -131,5 +134,43 @@ mod tests {
         assert!(loaded.settings.app_support.codex);
         assert!(loaded.settings.app_support.cursor);
         assert!(loaded.settings.app_support.zcode);
+    }
+
+    #[test]
+    fn legacy_manual_categories_are_exposed_as_custom_categories_and_persisted() {
+        let home = tempfile::tempdir().unwrap();
+        fs::create_dir_all(home.path().join(".skill-switch")).unwrap();
+        fs::write(
+            home.path().join(".skill-switch/config.json"),
+            r#"{
+              "schemaVersion": 1,
+              "appPaths": {},
+              "lastSection": "library",
+              "skillCategories": {
+                "first": " 瓜子FE ",
+                "second": "瓜子FE",
+                "built-in": "superpowers",
+                "blank": "  "
+              }
+            }"#,
+        )
+        .unwrap();
+
+        let loaded = load_settings(home.path()).unwrap();
+
+        assert_eq!(loaded.settings.custom_categories, vec!["瓜子FE"]);
+        save_settings(home.path(), &loaded.settings).unwrap();
+        let persisted: serde_json::Value = serde_json::from_slice(
+            &fs::read(home.path().join(".skill-switch/config.json")).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(persisted["customCategories"], serde_json::json!(["瓜子FE"]));
+        assert_eq!(
+            load_settings(home.path())
+                .unwrap()
+                .settings
+                .custom_categories,
+            vec!["瓜子FE"]
+        );
     }
 }
