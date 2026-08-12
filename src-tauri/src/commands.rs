@@ -4,7 +4,7 @@ use crate::error::{CommandError, ErrorCode};
 use crate::import_service;
 use crate::link_manager;
 use crate::models::{
-    is_category_sentinel, is_reserved_category, AppKind, BackupRecord, ImportCandidate,
+    is_manual_category_forbidden, is_reserved_category, AppKind, BackupRecord, ImportCandidate,
     ImportExecution, ImportRequest, ImportResult, ScanSnapshot, Settings, SettingsSnapshot,
     VisibilityState,
 };
@@ -74,7 +74,7 @@ fn set_skill_category_at(
     if trimmed.is_empty() {
         settings.skill_categories.remove(&skill_name);
     } else {
-        if is_category_sentinel(trimmed) {
+        if is_manual_category_forbidden(trimmed) {
             return Err(CommandError::new(ErrorCode::InvalidPath, "分类名称无效"));
         }
         settings
@@ -442,6 +442,7 @@ mod tests {
             "__legacy_category__",
             "__source_categories__",
             "__custom_categories__",
+            UNCATEGORIZED,
         ] {
             let create_error = create_custom_category_at(home.path(), sentinel.into()).unwrap_err();
             let rename_error =

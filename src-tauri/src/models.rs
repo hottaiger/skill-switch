@@ -159,6 +159,10 @@ pub fn is_category_sentinel(category: &str) -> bool {
     CATEGORY_SENTINELS.contains(&category)
 }
 
+pub fn is_manual_category_forbidden(category: &str) -> bool {
+    is_category_sentinel(category) || category == UNCATEGORIZED
+}
+
 pub fn is_reserved_category(category: &str) -> bool {
     BUILT_IN_CATEGORIES.contains(&category) || is_category_sentinel(category)
 }
