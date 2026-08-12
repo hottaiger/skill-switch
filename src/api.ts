@@ -38,6 +38,10 @@ export const api = {
     invoke<ScanSnapshot>("set_skill_category", { skillName, category }),
   createCustomCategory: (name: string) =>
     invoke<SettingsSnapshot>("create_custom_category", { name }),
+  renameCustomCategory: (previousName: string, nextName: string) =>
+    invoke<ScanSnapshot>("rename_custom_category", { previousName, nextName }),
+  deleteCustomCategory: (name: string) =>
+    invoke<ScanSnapshot>("delete_custom_category", { name }),
   updateUiPreferences: (lastSection: Section, libraryView: LibraryView) =>
     invoke<SettingsSnapshot>("update_ui_preferences", { lastSection, libraryView }),
   openSkillWith: (skillName: string, opener: SkillOpener) =>

@@ -22,6 +22,8 @@ import type { ScanSnapshot, SettingsSnapshot } from "./types";
   openBackupWith: vi.fn(),
   setSkillCategory: vi.fn(),
   createCustomCategory: vi.fn(),
+  renameCustomCategory: vi.fn(),
+  deleteCustomCategory: vi.fn(),
 }));
 
 vi.mock("./api", () => ({ api: mocks }));
@@ -427,6 +429,100 @@ it("creates a reusable custom category from the inspector", async () => {
   await user.click(screen.getByRole("option", { name: "using-superpowers" }));
   const otherSkillSelector = screen.getByRole("combobox", { name: "Skill 分类" });
   expect(within(otherSkillSelector).getByRole("option", { name: "瓜子FE" })).toBeInTheDocument();
+});
+
+it("renames a custom category from Settings and refreshes its usage", async () => {
+  const user = userEvent.setup();
+  const categorizedSnapshot = structuredClone(snapshot);
+  categorizedSnapshot.skills[0].category = "瓜子FE";
+  categorizedSnapshot.skills[0].categorySource = "manual";
+  categorizedSnapshot.skills[1].category = "瓜子FE";
+  categorizedSnapshot.skills[1].categorySource = "manual";
+  const renamedSnapshot = structuredClone(categorizedSnapshot);
+  renamedSnapshot.skills[0].category = "新瓜子FE";
+  renamedSnapshot.skills[1].category = "新瓜子FE";
+  const categorizedSettings = {
+    ...settings,
+    settings: { ...settings.settings, customCategories: ["瓜子FE"] },
+  };
+  const renamedSettings = {
+    ...categorizedSettings,
+    settings: { ...categorizedSettings.settings, customCategories: ["新瓜子FE"] },
+  };
+  let activeSettings = categorizedSettings;
+  mocks.scanSkills.mockResolvedValue(categorizedSnapshot);
+  mocks.getSettings.mockImplementation(() => Promise.resolve(activeSettings));
+  mocks.renameCustomCategory.mockImplementation(() => {
+    activeSettings = renamedSettings;
+    return Promise.resolve(renamedSnapshot);
+  });
+  render(<App />);
+  await user.click(await screen.findByRole("button", { name: /设置/ }));
+  expect(await screen.findByText("瓜子FE · 使用于 2 个 Skill")).toBeVisible();
+  const input = screen.getByRole("textbox", { name: "重命名 瓜子FE" });
+  await user.clear(input);
+  await user.type(input, "新瓜子FE");
+  await user.click(screen.getByRole("button", { name: "重命名 瓜子FE" }));
+  await waitFor(() => expect(mocks.renameCustomCategory).toHaveBeenCalledWith("瓜子FE", "新瓜子FE"));
+  expect(await screen.findByText("新瓜子FE · 使用于 2 个 Skill")).toBeVisible();
+});
+
+it("confirms moving referenced custom-category Skills to uncategorized before deletion", async () => {
+  const user = userEvent.setup();
+  const categorizedSnapshot = structuredClone(snapshot);
+  categorizedSnapshot.skills[0].category = "瓜子FE";
+  categorizedSnapshot.skills[0].categorySource = "manual";
+  categorizedSnapshot.skills[1].category = "瓜子FE";
+  categorizedSnapshot.skills[1].categorySource = "manual";
+  const deletedSnapshot = structuredClone(categorizedSnapshot);
+  deletedSnapshot.skills[0].category = "未分类";
+  deletedSnapshot.skills[0].categorySource = "auto";
+  deletedSnapshot.skills[1].category = "未分类";
+  deletedSnapshot.skills[1].categorySource = "auto";
+  const categorizedSettings = {
+    ...settings,
+    settings: { ...settings.settings, customCategories: ["瓜子FE"] },
+  };
+  const deletedSettings = {
+    ...categorizedSettings,
+    settings: { ...categorizedSettings.settings, customCategories: [] },
+  };
+  let activeSettings = categorizedSettings;
+  mocks.scanSkills.mockResolvedValue(categorizedSnapshot);
+  mocks.getSettings.mockImplementation(() => Promise.resolve(activeSettings));
+  mocks.deleteCustomCategory.mockImplementation(() => {
+    activeSettings = deletedSettings;
+    return Promise.resolve(deletedSnapshot);
+  });
+  render(<App />);
+  await user.click(await screen.findByRole("button", { name: /设置/ }));
+  expect(await screen.findByText("瓜子FE · 使用于 2 个 Skill")).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "删除 瓜子FE" }));
+  const confirmation = await screen.findByRole("alertdialog", { name: "删除 瓜子FE" });
+  expect(within(confirmation).getByText(/引用此分类的 Skills 将变为未分类/)).toBeVisible();
+  await user.click(within(confirmation).getByRole("button", { name: "确认移至未分类" }));
+  await waitFor(() => expect(mocks.deleteCustomCategory).toHaveBeenCalledWith("瓜子FE"));
+  expect(screen.queryByText("瓜子FE · 使用于 2 个 Skill")).not.toBeInTheDocument();
+});
+
+it("deletes an unused custom category without confirmation", async () => {
+  const user = userEvent.setup();
+  const categorizedSettings = {
+    ...settings,
+    settings: { ...settings.settings, customCategories: ["闲置"] },
+  };
+  let activeSettings = categorizedSettings;
+  mocks.getSettings.mockImplementation(() => Promise.resolve(activeSettings));
+  mocks.deleteCustomCategory.mockImplementation(() => {
+    activeSettings = settings;
+    return Promise.resolve(snapshot);
+  });
+  render(<App />);
+  await user.click(await screen.findByRole("button", { name: /设置/ }));
+  expect(await screen.findByText("闲置 · 使用于 0 个 Skill")).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "删除 闲置" }));
+  expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+  await waitFor(() => expect(mocks.deleteCustomCategory).toHaveBeenCalledWith("闲置"));
 });
 
 it("saves editable managed-app paths while native paths remain fixed", async () => {
