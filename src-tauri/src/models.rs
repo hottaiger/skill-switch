@@ -120,10 +120,18 @@ pub const OBSIDIAN_SKILLS: [&str; 5] = [
     "obsidian-markdown",
 ];
 
+/// 来自 axtonliu/axton-obsidian-visual-skills 仓库。
+pub const OBSIDIAN_VISUAL_SKILLS_PACK: [&str; 3] = [
+    "excalidraw-diagram",
+    "mermaid-visualizer",
+    "obsidian-canvas-creator",
+];
+
 pub const MATT_POCOCK_CATEGORY: &str = "Matt Pocock";
 pub const COMET_CATEGORY: &str = "Comet";
 pub const GITNEXUS_CATEGORY: &str = "GitNexus";
 pub const OBSIDIAN_CATEGORY: &str = "Obsidian";
+pub const OBSIDIAN_VISUAL_SKILLS_PACK_CATEGORY: &str = "Obsidian Visual Skills Pack";
 pub const SUPERPOWERS_CATEGORY: &str = "superpowers";
 pub const OPENSPEC_CATEGORY: &str = "openspec";
 pub const UNCATEGORIZED: &str = "未分类";
@@ -161,6 +169,9 @@ pub fn resolve_category(skill_name: &str, user_categories: &BTreeMap<String, Str
     }
     if OBSIDIAN_SKILLS.contains(&skill_name) {
         return OBSIDIAN_CATEGORY.into();
+    }
+    if OBSIDIAN_VISUAL_SKILLS_PACK.contains(&skill_name) {
+        return OBSIDIAN_VISUAL_SKILLS_PACK_CATEGORY.into();
     }
     UNCATEGORIZED.into()
 }
@@ -211,6 +222,14 @@ mod category_tests {
     #[test]
     fn obsidian_skills_use_the_obsidian_category() {
         assert_eq!(resolve_category("obsidian-markdown", &BTreeMap::new()), "Obsidian");
+    }
+
+    #[test]
+    fn obsidian_visual_skills_pack_uses_its_own_category() {
+        assert_eq!(
+            resolve_category("excalidraw-diagram", &BTreeMap::new()),
+            OBSIDIAN_VISUAL_SKILLS_PACK_CATEGORY
+        );
     }
 
     #[test]
