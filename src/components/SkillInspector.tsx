@@ -4,7 +4,7 @@ import { ALL_APPS, APP_LABELS, isNativeApp, type AppKind, type AppSupport, type 
 const BUILT_IN_CATEGORIES = ["Matt Pocock", "superpowers", "openspec"];
 
 function categoryRule(category: string) {
-  if (category === "Matt Pocock") return "Matt Pocock · skills/engineering";
+  if (category === "Matt Pocock") return "Matt Pocock skills";
   if (category === "superpowers") return "obra/superpowers";
   if (category === "openspec") return "Fission-AI/OpenSpec";
   return "未命中内置来源规则";

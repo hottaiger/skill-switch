@@ -72,6 +72,17 @@ pub const MATT_POCOCK_ENGINEERING_SKILLS: [&str; 18] = [
     "wizard",
 ];
 
+/// 来自 mattpocock/skills 的 skills/productivity 目录。
+pub const MATT_POCOCK_PRODUCTIVITY_SKILLS: [&str; 7] = [
+    "grill-me",
+    "grilling",
+    "handoff",
+    "teach",
+    "to-questionnaire",
+    "wait-what",
+    "writing-for-agents",
+];
+
 pub const MATT_POCOCK_CATEGORY: &str = "Matt Pocock";
 pub const SUPERPOWERS_CATEGORY: &str = "superpowers";
 pub const OPENSPEC_CATEGORY: &str = "openspec";
@@ -97,7 +108,9 @@ pub fn resolve_category(skill_name: &str, user_categories: &BTreeMap<String, Str
     if OPENSPEC_SKILLS.contains(&skill_name) {
         return OPENSPEC_CATEGORY.into();
     }
-    if MATT_POCOCK_ENGINEERING_SKILLS.contains(&skill_name) {
+    if MATT_POCOCK_ENGINEERING_SKILLS.contains(&skill_name)
+        || MATT_POCOCK_PRODUCTIVITY_SKILLS.contains(&skill_name)
+    {
         return MATT_POCOCK_CATEGORY.into();
     }
     UNCATEGORIZED.into()
@@ -122,6 +135,14 @@ mod category_tests {
         assert_eq!(
             resolve_category("implement", &BTreeMap::new()),
             "Matt Pocock"
+        );
+    }
+
+    #[test]
+    fn matt_pocock_productivity_skills_use_the_matt_pocock_category() {
+        assert_eq!(
+            resolve_category("handoff", &BTreeMap::new()),
+            MATT_POCOCK_CATEGORY
         );
     }
 
