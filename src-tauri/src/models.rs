@@ -111,9 +111,19 @@ pub const GITNEXUS_SKILLS: [&str; 9] = [
     "gitnexus-taint-analysis",
 ];
 
+/// 来自 kepano/obsidian-skills 的 skills 目录。
+pub const OBSIDIAN_SKILLS: [&str; 5] = [
+    "defuddle",
+    "json-canvas",
+    "obsidian-bases",
+    "obsidian-cli",
+    "obsidian-markdown",
+];
+
 pub const MATT_POCOCK_CATEGORY: &str = "Matt Pocock";
 pub const COMET_CATEGORY: &str = "Comet";
 pub const GITNEXUS_CATEGORY: &str = "GitNexus";
+pub const OBSIDIAN_CATEGORY: &str = "Obsidian";
 pub const SUPERPOWERS_CATEGORY: &str = "superpowers";
 pub const OPENSPEC_CATEGORY: &str = "openspec";
 pub const UNCATEGORIZED: &str = "未分类";
@@ -148,6 +158,9 @@ pub fn resolve_category(skill_name: &str, user_categories: &BTreeMap<String, Str
     }
     if GITNEXUS_SKILLS.contains(&skill_name) {
         return GITNEXUS_CATEGORY.into();
+    }
+    if OBSIDIAN_SKILLS.contains(&skill_name) {
+        return OBSIDIAN_CATEGORY.into();
     }
     UNCATEGORIZED.into()
 }
@@ -193,6 +206,11 @@ mod category_tests {
             resolve_category("gitnexus-pr-review", &BTreeMap::new()),
             "GitNexus"
         );
+    }
+
+    #[test]
+    fn obsidian_skills_use_the_obsidian_category() {
+        assert_eq!(resolve_category("obsidian-markdown", &BTreeMap::new()), "Obsidian");
     }
 
     #[test]
