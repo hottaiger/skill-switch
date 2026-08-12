@@ -1,6 +1,20 @@
 import { useEffect, useState } from "react";
 import { ALL_APPS, APP_LABELS, isNativeApp, type AppKind, type AppSupport, type SkillRecord } from "../types";
 
+const BUILT_IN_CATEGORIES = ["Matt Pocock", "superpowers", "openspec"];
+
+function categoryRule(category: string) {
+  if (category === "Matt Pocock") return "Matt Pocock · skills/engineering";
+  if (category === "superpowers") return "obra/superpowers";
+  if (category === "openspec") return "Fission-AI/OpenSpec";
+  return "未命中内置来源规则";
+}
+
+function categorySelection(category: string, source: SkillRecord["categorySource"]) {
+  if (source === "auto") return "__auto__";
+  return BUILT_IN_CATEGORIES.includes(category) ? category : "__custom__";
+}
+
 interface SkillInspectorProps {
   skill?: SkillRecord;
   busyKey?: string;
@@ -25,10 +39,15 @@ export function SkillInspector({ skill, busyKey, appSupport, onClose, onToggle, 
   const [confirming, setConfirming] = useState(false);
   const [reason, setReason] = useState("");
   const [categoryDraft, setCategoryDraft] = useState("");
+  const [categoryMode, setCategoryMode] = useState("__auto__");
+  useEffect(() => {
+    if (!skill) return;
+    setCategoryDraft(skill.category);
+    setCategoryMode(categorySelection(skill.category, skill.categorySource));
+  }, [skill?.name, skill?.category, skill?.categorySource]);
   if (!skill) return null;
   const uninstalling = busyKey === `${skill.name}:uninstall`;
   const savingCategory = busyKey === `${skill.name}:category`;
-  useEffect(() => { setCategoryDraft(skill.category); }, [skill.name, skill.category]);
   const draft = categoryDraft;
   return (
     <aside className="inspector" role="dialog" aria-label="Skill 详情">
@@ -38,30 +57,48 @@ export function SkillInspector({ skill, busyKey, appSupport, onClose, onToggle, 
       <label className="category-edit">
         <span>分类</span>
         <div className="category-edit-row">
-          <input
-            value={draft}
-            onChange={(event) => setCategoryDraft(event.target.value)}
-            placeholder="未分类"
+          <select
+            aria-label="Skill 分类"
+            value={categoryMode}
+            onChange={(event) => {
+              const value = event.target.value;
+              setCategoryMode(value);
+              if (value === "__auto__" || value === "__custom__") setCategoryDraft("");
+              else setCategoryDraft(value);
+            }}
             disabled={savingCategory}
-          />
+          >
+            <option value="__auto__">自动识别（{skill.category}）</option>
+            {BUILT_IN_CATEGORIES.map((category) => <option value={category} key={category}>{category}</option>)}
+            <option value="__custom__">自定义分类…</option>
+          </select>
+          {categoryMode === "__custom__" && (
+            <input
+              aria-label="自定义分类"
+              value={draft}
+              onChange={(event) => setCategoryDraft(event.target.value)}
+              placeholder="例如：项目专用"
+              disabled={savingCategory}
+            />
+          )}
           <button
             className="ghost-button"
-            disabled={savingCategory || draft === skill.category}
+            disabled={savingCategory || (draft === skill.category && skill.categorySource === "manual")}
             onClick={() => onSetCategory(skill.name, draft.trim())}
           >
             {savingCategory ? "保存中" : "保存"}
           </button>
-          {skill.category !== "未分类" && (
+          {skill.categorySource === "manual" && (
             <button
               className="ghost-button"
               disabled={savingCategory}
-              onClick={() => { setCategoryDraft("未分类"); onSetCategory(skill.name, "未分类"); }}
+              onClick={() => { setCategoryDraft(""); onSetCategory(skill.name, ""); }}
             >
-              清除
+              恢复自动
             </button>
           )}
         </div>
-        <small>默认按内置规则(superpowers 清单)分类;手动填写可覆盖,留空则回退。</small>
+        <small>{skill.categorySource === "manual" ? "手动分类，优先于自动识别。" : `自动识别：${categoryRule(skill.category)}。`}</small>
       </label>
       <div className="description">{skill.description || "该 Skill 未提供 description。"}</div>
       <h3>应用可见性</h3>

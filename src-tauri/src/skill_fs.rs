@@ -1,5 +1,7 @@
 use crate::error::{CommandError, ErrorCode};
-use crate::models::{ScanSnapshot, Settings, SkillRecord};
+use crate::models::{
+    resolve_category, resolve_category_source, ScanSnapshot, Settings, SkillRecord,
+};
 use crate::paths::ssot_dir;
 use sha2::{Digest, Sha256};
 use std::fs;
@@ -147,7 +149,8 @@ pub fn scan_skills(home: &Path, settings: &Settings) -> Result<ScanSnapshot, Com
             modified_at_ms,
             size_bytes: directory_size(&path),
             visibility: Vec::new(),
-            category: crate::models::resolve_category(&name, &settings.skill_categories),
+            category: resolve_category(&name, &settings.skill_categories),
+            category_source: resolve_category_source(&name, &settings.skill_categories),
         });
     }
     skills.sort_by_key(|skill| skill.name.to_lowercase());

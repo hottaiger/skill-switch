@@ -37,6 +37,7 @@ const snapshot: ScanSnapshot = {
       modifiedAtMs: 1,
       sizeBytes: 2300,
       category: "未分类",
+      categorySource: "auto",
       visibility: [
         { app: "claude", enabled: true, mode: "linked" },
         { app: "gemini", enabled: false, mode: "disabled" },
@@ -54,6 +55,7 @@ const snapshot: ScanSnapshot = {
       modifiedAtMs: 2,
       sizeBytes: 200,
       category: "superpowers",
+      categorySource: "auto",
       visibility: [
         { app: "claude", enabled: false, mode: "disabled" },
         { app: "gemini", enabled: false, mode: "disabled" },
@@ -71,8 +73,27 @@ const snapshot: ScanSnapshot = {
       modifiedAtMs: 3,
       sizeBytes: 100,
       category: "未分类",
+      categorySource: "auto",
       visibility: [
         { app: "claude", enabled: false, mode: "disabled" },
+        { app: "gemini", enabled: false, mode: "disabled" },
+        { app: "openCode", enabled: false, mode: "disabled" },
+        { app: "hermes", enabled: false, mode: "disabled" },
+        { app: "codex", enabled: true, mode: "auto" },
+        { app: "cursor", enabled: true, mode: "auto" },
+        { app: "zcode", enabled: true, mode: "auto" },
+      ],
+    },
+    {
+      name: "implement",
+      description: "Build the work described by a spec",
+      path: "/Users/test/.agents/skills/implement",
+      modifiedAtMs: 4,
+      sizeBytes: 300,
+      category: "Matt Pocock",
+      categorySource: "auto",
+      visibility: [
+        { app: "claude", enabled: true, mode: "linked" },
         { app: "gemini", enabled: false, mode: "disabled" },
         { app: "openCode", enabled: false, mode: "disabled" },
         { app: "hermes", enabled: false, mode: "disabled" },
@@ -307,6 +328,7 @@ it("groups skills by category by default and can toggle off", async () => {
   const headers = document.querySelectorAll(".skill-group-header");
   const headerNames = Array.from(headers).map((el) => el.textContent || "");
   expect(headerNames.some((t) => t.includes("superpowers"))).toBe(true);
+  expect(headerNames.some((t) => t.includes("Matt Pocock"))).toBe(true);
   expect(headerNames.some((t) => t.includes("未分类"))).toBe(true);
   await user.click(screen.getByRole("button", { name: "已分组" }));
   expect(document.querySelectorAll(".skill-group-header")).toHaveLength(0);
@@ -317,8 +339,8 @@ it("saves a manual category override from the inspector", async () => {
   mocks.setSkillCategory.mockResolvedValue(snapshot);
   render(<App />);
   await user.click(await screen.findByRole("option", { name: "detail-koala-ui" }));
-  const input = screen.getByPlaceholderText("未分类");
-  await user.clear(input);
+  await user.selectOptions(screen.getByRole("combobox", { name: "Skill 分类" }), "__custom__");
+  const input = screen.getByRole("textbox", { name: "自定义分类" });
   await user.type(input, "前端");
   expect(input).toHaveValue("前端");
   await user.click(screen.getByRole("button", { name: "保存" }));

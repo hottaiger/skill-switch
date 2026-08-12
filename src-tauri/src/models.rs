@@ -50,11 +50,41 @@ pub const OPENSPEC_SKILLS: [&str; 12] = [
     "openspec-verify-change",
 ];
 
+/// 来自 mattpocock/skills 的 skills/engineering 目录。
+pub const MATT_POCOCK_ENGINEERING_SKILLS: [&str; 18] = [
+    "ask-matt",
+    "code-review",
+    "codebase-design",
+    "diagnosing-bugs",
+    "domain-modeling",
+    "grill-with-docs",
+    "implement",
+    "improve-codebase-architecture",
+    "prototype",
+    "research",
+    "resolving-merge-conflicts",
+    "setup-matt-pocock-skills",
+    "tdd",
+    "to-spec",
+    "to-tickets",
+    "triage",
+    "wayfinder",
+    "wizard",
+];
+
+pub const MATT_POCOCK_CATEGORY: &str = "Matt Pocock";
 pub const SUPERPOWERS_CATEGORY: &str = "superpowers";
 pub const OPENSPEC_CATEGORY: &str = "openspec";
 pub const UNCATEGORIZED: &str = "未分类";
 
-/// 计算单个 Skill 的分类：用户标记优先，其次内置 superpowers / openspec 规则，否则未分类。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum CategorySource {
+    Auto,
+    Manual,
+}
+
+/// 计算单个 Skill 的分类：用户标记优先，其次内置来源规则，否则未分类。
 pub fn resolve_category(skill_name: &str, user_categories: &BTreeMap<String, String>) -> String {
     if let Some(custom) = user_categories.get(skill_name) {
         if !custom.trim().is_empty() {
@@ -67,7 +97,51 @@ pub fn resolve_category(skill_name: &str, user_categories: &BTreeMap<String, Str
     if OPENSPEC_SKILLS.contains(&skill_name) {
         return OPENSPEC_CATEGORY.into();
     }
+    if MATT_POCOCK_ENGINEERING_SKILLS.contains(&skill_name) {
+        return MATT_POCOCK_CATEGORY.into();
+    }
     UNCATEGORIZED.into()
+}
+
+pub fn resolve_category_source(
+    skill_name: &str,
+    user_categories: &BTreeMap<String, String>,
+) -> CategorySource {
+    user_categories
+        .get(skill_name)
+        .filter(|category| !category.trim().is_empty())
+        .map_or(CategorySource::Auto, |_| CategorySource::Manual)
+}
+
+#[cfg(test)]
+mod category_tests {
+    use super::*;
+
+    #[test]
+    fn matt_pocock_engineering_skills_use_the_matt_pocock_category() {
+        assert_eq!(
+            resolve_category("implement", &BTreeMap::new()),
+            "Matt Pocock"
+        );
+    }
+
+    #[test]
+    fn manual_category_overrides_the_matt_pocock_rule() {
+        let categories = BTreeMap::from([("implement".into(), "项目专用".into())]);
+        assert_eq!(resolve_category("implement", &categories), "项目专用");
+        assert_eq!(
+            resolve_category_source("implement", &categories),
+            CategorySource::Manual
+        );
+    }
+
+    #[test]
+    fn unrecognized_skills_fall_back_to_uncategorized() {
+        assert_eq!(
+            resolve_category("my-local-skill", &BTreeMap::new()),
+            UNCATEGORIZED
+        );
+    }
 }
 
 impl AppKind {
@@ -219,6 +293,7 @@ pub struct SkillRecord {
     pub size_bytes: u64,
     pub visibility: Vec<VisibilityState>,
     pub category: String,
+    pub category_source: CategorySource,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
