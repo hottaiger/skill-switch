@@ -38,6 +38,9 @@ pub fn run() {
             commands::open_skill_with,
             commands::open_backup_with,
             commands::set_skill_category,
+            commands::create_custom_category,
+            commands::rename_custom_category,
+            commands::delete_custom_category,
         ])
         .build(tauri::generate_context!())
         .expect("failed to build Skill Switch");

@@ -136,6 +136,17 @@ pub const SUPERPOWERS_CATEGORY: &str = "superpowers";
 pub const OPENSPEC_CATEGORY: &str = "openspec";
 pub const UNCATEGORIZED: &str = "未分类";
 
+pub const BUILT_IN_CATEGORIES: [&str; 8] = [
+    MATT_POCOCK_CATEGORY,
+    COMET_CATEGORY,
+    GITNEXUS_CATEGORY,
+    OBSIDIAN_CATEGORY,
+    OBSIDIAN_VISUAL_SKILLS_PACK_CATEGORY,
+    SUPERPOWERS_CATEGORY,
+    OPENSPEC_CATEGORY,
+    UNCATEGORIZED,
+];
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum CategorySource {
@@ -348,6 +359,8 @@ pub struct Settings {
     pub library_view: String,
     #[serde(default)]
     pub skill_categories: BTreeMap<String, String>,
+    #[serde(default)]
+    pub custom_categories: Vec<String>,
 }
 
 fn default_library_view() -> String {
@@ -367,6 +380,7 @@ impl Default for Settings {
             last_section: "library".into(),
             library_view: default_library_view(),
             skill_categories: BTreeMap::new(),
+            custom_categories: Vec::new(),
         }
     }
 }
