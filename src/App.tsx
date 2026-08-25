@@ -13,7 +13,6 @@ import type {
   CommandError,
   ImportCandidate,
   ImportDecision,
-  LibraryView,
   ScanSnapshot,
   Section,
   SettingsSnapshot,
@@ -35,7 +34,6 @@ export default function App() {
   const [backups, setBackups] = useState<BackupRecord[]>([]);
   const [selectedName, setSelectedName] = useState<string>();
   const [search, setSearch] = useState("");
-  const [libraryView, setLibraryView] = useState<LibraryView>("list");
   const [groupByCategory, setGroupByCategory] = useState(true);
   const [appFilter, setAppFilter] = useState<AppKind>();
   const [busyKey, setBusyKey] = useState<string>();
@@ -76,7 +74,6 @@ export default function App() {
       api.getSettings().then((value) => {
         setSettings(value);
         setSection(value.settings.lastSection);
-        setLibraryView(value.settings.libraryView);
         if (value.warning) setMessage({ type: "error", text: value.warning.message });
       }).catch((error) => setMessage({ type: "error", text: errorMessage(error) })),
     ]);
@@ -99,16 +96,12 @@ export default function App() {
   );
   const appSupport = settings?.settings.appSupport || DEFAULT_APP_SUPPORT;
 
-  const persistPreference = (nextSection: Section, nextView = libraryView) => {
-    void api.updateUiPreferences(nextSection, nextView).catch(() => undefined);
+  const persistPreference = (nextSection: Section) => {
+    void api.updateUiPreferences(nextSection).catch(() => undefined);
   };
 
   const changeSection = (next: Section) => {
     setSection(next); setAppFilter(undefined); persistPreference(next);
-  };
-
-  const changeLibraryView = (next: LibraryView) => {
-    setLibraryView(next); persistPreference(section, next);
   };
 
   useEffect(() => {
@@ -302,7 +295,7 @@ export default function App() {
       />
       <main className="main-panel">
         {message && <div role={message.type === "error" ? "alert" : "status"} className={`message-banner ${message.type}`}><span>{message.text}</span><button aria-label="关闭提示" onClick={() => setMessage(undefined)}>×</button></div>}
-        {section === "library" && <SkillLibrary skills={snapshot?.skills || []} selectedName={selectedName} search={search} appFilter={appFilter} appSupport={appSupport} view={libraryView} loading={loading} groupByCategory={groupByCategory} onSearch={setSearch} onViewChange={changeLibraryView} onToggleGroup={() => setGroupByCategory((value) => !value)} onSelect={setSelectedName} onRefresh={() => void refreshSkills()} onImport={() => changeSection("import")} onClearAppFilter={() => setAppFilter(undefined)} onOpenWith={openSkillWith} />}
+        {section === "library" && <SkillLibrary skills={snapshot?.skills || []} selectedName={selectedName} search={search} appFilter={appFilter} appSupport={appSupport} loading={loading} groupByCategory={groupByCategory} onSearch={setSearch} onToggleGroup={() => setGroupByCategory((value) => !value)} onSelect={setSelectedName} onRefresh={() => void refreshSkills()} onImport={() => changeSection("import")} onClearAppFilter={() => setAppFilter(undefined)} onOpenWith={openSkillWith} />}
         {section === "import" && <ImportPage candidates={candidates} loading={loading} busyKey={busyKey} appSupport={appSupport} onRefresh={() => void refreshImports()} onImport={(candidate, decision) => void runImport(candidate, decision)} />}
         {section === "backups" && <BackupPage backups={backups} loading={loading} busyKey={busyKey} onRefresh={() => void refreshBackups()} onRestore={(backup) => void restore(backup)} onPermanentDelete={(backup) => void permanentDelete(backup)} onOpenWith={(backupId, opener) => void openBackupWith(backupId, opener)} />}
         {section === "settings" && <SettingsPage snapshot={settings} skills={snapshot} busyKey={busyKey} onSave={(app, path) => void savePath(app, path)} onToggleSupport={(app, enabled) => void toggleAppSupport(app, enabled)} onCreateCustomCategory={(name) => void createCustomCategoryFromSettings(name)} onRenameCustomCategory={(previousName, nextName) => void renameCustomCategory(previousName, nextName)} onDeleteCustomCategory={(name) => void deleteCustomCategory(name)} />}

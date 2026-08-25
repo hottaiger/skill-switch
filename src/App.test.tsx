@@ -174,18 +174,16 @@ it("updates supported apps and hides a disabled app from navigation", async () =
   expect(screen.queryByRole("button", { name: "Claude" })).not.toBeInTheDocument();
 });
 
-it("switches to cards while preserving filtering and persists the choice", async () => {
+it("collapses and expands every category with a single toggle", async () => {
   const user = userEvent.setup();
   render(<App />);
   await screen.findByRole("option", { name: "detail-koala-ui" });
-  await user.click(screen.getByRole("button", { name: "卡片" }));
-  expect(screen.getByRole("button", { name: "卡片" })).toHaveAttribute("aria-pressed", "true");
+  const toggleAll = screen.getByRole("button", { name: "全部收起" });
+  await user.click(toggleAll);
+  expect(screen.queryByRole("option", { name: "detail-koala-ui" })).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "全部展开" })).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "全部展开" }));
   expect(screen.getByRole("option", { name: "detail-koala-ui" })).toBeVisible();
-  expect(mocks.updateUiPreferences).toHaveBeenCalledWith("library", "cards");
-  await user.click(screen.getByRole("option", { name: "detail-koala-ui" }));
-  expect(await screen.findByRole("dialog", { name: "Skill 详情" })).toBeVisible();
-  await user.click(screen.getByRole("button", { name: "关闭详情" }));
-  expect(screen.queryByRole("dialog", { name: "Skill 详情" })).not.toBeInTheDocument();
 });
 
 it("supports keyboard selection in the skill collection", async () => {

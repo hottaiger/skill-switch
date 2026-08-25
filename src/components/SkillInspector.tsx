@@ -88,39 +88,42 @@ export function SkillInspector({ skill, busyKey, appSupport, customCategories, o
       <div className="inspector-topbar"><span className="eyebrow">SKILL 详情</span><button className="inspector-close" aria-label="关闭详情" onClick={onClose}>×</button></div>
       <h2>{skill.name}</h2>
       <p className="meta">本地 · {formatSize(skill.sizeBytes)} · 修改于 {formatTime(skill.modifiedAtMs)}</p>
-      <label className="category-edit">
-        <span>分类</span>
+      <div className="category-edit">
+        <span className="category-edit-label">分类</span>
         <div className="category-edit-row">
-          <select
-            aria-label="Skill 分类"
-            value={categoryMode}
-            onChange={(event) => {
-              const value = event.target.value;
-              setCategoryMode(value);
-              if (value === "__uncategorized__" || value === "__new_category__") setCategoryDraft("");
-              else setCategoryDraft(value);
-            }}
-            disabled={savingCategory}
-          >
-            {skill.categorySource === "auto" && skill.category === "未分类" && <option value="__uncategorized__">未分类</option>}
-            {categoryMode === "__legacy_category__" && <option value="__legacy_category__" disabled>{skill.category}</option>}
-            <option value="__source_categories__" disabled>来源分类</option>
-            {BUILT_IN_CATEGORIES.map((category) => <option value={category} key={category}>{category}</option>)}
-            <option value="__custom_categories__" disabled>自定义分类</option>
-            {availableCustomCategories.map((category) => <option value={category} key={category}>{category}</option>)}
-            <option value="__new_category__">新建分类…</option>
-          </select>
-          {categoryMode === "__new_category__" && (
+          {categoryMode === "__new_category__" ? (
             <input
               aria-label="新建分类"
               value={draft}
               onChange={(event) => setCategoryDraft(event.target.value)}
               placeholder="例如：项目专用"
               disabled={savingCategory}
+              className="category-edit-input"
             />
+          ) : (
+            <select
+              aria-label="Skill 分类"
+              value={categoryMode}
+              onChange={(event) => {
+                const value = event.target.value;
+                setCategoryMode(value);
+                if (value === "__uncategorized__" || value === "__new_category__") setCategoryDraft("");
+                else setCategoryDraft(value);
+              }}
+              disabled={savingCategory}
+              className="category-edit-input"
+            >
+              {skill.categorySource === "auto" && skill.category === "未分类" && <option value="__uncategorized__">未分类</option>}
+              {categoryMode === "__legacy_category__" && <option value="__legacy_category__" disabled>{skill.category}</option>}
+              <option value="__source_categories__" disabled>来源分类</option>
+              {BUILT_IN_CATEGORIES.map((category) => <option value={category} key={category}>{category}</option>)}
+              <option value="__custom_categories__" disabled>自定义分类</option>
+              {availableCustomCategories.map((category) => <option value={category} key={category}>{category}</option>)}
+              <option value="__new_category__">新建分类…</option>
+            </select>
           )}
           <button
-            className="ghost-button"
+            className="ghost-button category-edit-action"
             disabled={savingCategory || !draft.trim() || (categoryMode === "__new_category__" ? draft.trim() === skill.category : !canSaveExistingCategory)}
             onClick={() => categoryMode === "__new_category__" ? onCreateCategory(skill.name, draft.trim()) : onSetCategory(skill.name, draft.trim())}
           >
@@ -128,7 +131,7 @@ export function SkillInspector({ skill, busyKey, appSupport, customCategories, o
           </button>
           {skill.categorySource === "manual" && (
             <button
-              className="ghost-button"
+              className="ghost-button category-edit-action"
               disabled={savingCategory}
               onClick={() => { setCategoryDraft(""); onSetCategory(skill.name, ""); }}
             >
@@ -139,7 +142,7 @@ export function SkillInspector({ skill, busyKey, appSupport, customCategories, o
         {skill.categorySource === "manual" ? <small>已手动设置分类。</small> : source && <small>
           来源：{source.label}。<a className="category-source-link" href={source.url} target="_blank" rel="noreferrer">{source.url.replace("https://", "")}</a>
         </small>}
-      </label>
+      </div>
       <div className="description">{skill.description || "该 Skill 未提供 description。"}</div>
       <h3>应用可见性</h3>
       <div className="visibility-list">

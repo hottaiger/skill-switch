@@ -142,12 +142,14 @@ button:disabled { opacity: .48; cursor: default; }
 .group-toggle { min-height: 32px; padding: 4px 11px; }
 .group-toggle[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
 
-.category-edit { display: block; margin-bottom: 16px; }
-.category-edit > span { display: block; margin-bottom: 6px; color: var(--muted); font-size: var(--font-secondary); }
-.category-edit-row { display: flex; gap: 6px; align-items: center; }
-.category-edit input, .category-edit select { flex: 1; min-width: 0; min-height: 32px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); color: var(--text); font-size: var(--font-body); font-family: inherit; }
-.category-edit input:focus, .category-edit select:focus { outline: 0; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-ring); }
-.category-edit small { display: block; margin-top: 5px; color: var(--muted); font-size: var(--font-secondary); }
+.category-edit { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.category-edit-label { color: var(--muted); font-size: var(--font-secondary); }
+.category-edit-row { display: flex; gap: 6px; align-items: stretch; }
+.category-edit-input { flex: 1; min-width: 0; box-sizing: border-box; height: 32px; min-height: 32px; max-height: 32px; padding: 0 9px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); color: var(--text); font-size: var(--font-body); font-family: inherit; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; -webkit-appearance: none; appearance: none; }
+.category-edit-input:focus { outline: 0; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-ring); }
+select.category-edit-input { padding-right: 28px; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238a8a8a'><path d='M6 9l6 6 6-6z'/></svg>"); background-repeat: no-repeat; background-position: right 8px center; background-size: 14px 14px; }
+.category-edit-action { flex: none; height: 32px; min-height: 32px; max-height: 32px; padding: 0 11px; }
+.category-edit small { display: block; color: var(--muted); font-size: var(--font-secondary); }
 .category-source-link { color: var(--accent); overflow-wrap: anywhere; }
 
 .open-with { position: relative; flex: none; }

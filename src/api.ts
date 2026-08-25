@@ -5,7 +5,6 @@ import type {
   ImportCandidate,
   ImportExecution,
   ImportRequest,
-  LibraryView,
   ScanSnapshot,
   Section,
   SettingsSnapshot,
@@ -42,8 +41,8 @@ export const api = {
     invoke<ScanSnapshot>("rename_custom_category", { previousName, nextName }),
   deleteCustomCategory: (name: string) =>
     invoke<ScanSnapshot>("delete_custom_category", { name }),
-  updateUiPreferences: (lastSection: Section, libraryView: LibraryView) =>
-    invoke<SettingsSnapshot>("update_ui_preferences", { lastSection, libraryView }),
+  updateUiPreferences: (lastSection: Section) =>
+    invoke<SettingsSnapshot>("update_ui_preferences", { lastSection }),
   openSkillWith: (skillName: string, opener: SkillOpener) =>
     invoke<void>("open_skill_with", { skillName, opener }),
   openBackupWith: (backupId: string, opener: SkillOpener) =>

@@ -1,6 +1,5 @@
-import { useRef, useState } from "react";
-import { APP_LABELS, type AppKind, type AppSupport, type LibraryView, type SkillOpener, type SkillRecord } from "../types";
-import { AppIcon } from "./AppIcon";
+import { useMemo, useRef, useState } from "react";
+import { APP_LABELS, type AppKind, type AppSupport, type SkillOpener, type SkillRecord } from "../types";
 import { OpenWithMenu } from "./OpenWithMenu";
 
 interface SkillLibraryProps {
@@ -9,22 +8,16 @@ interface SkillLibraryProps {
   search: string;
   appFilter?: AppKind;
   appSupport: AppSupport;
-  view: LibraryView;
   loading: boolean;
   busyKey?: string;
   groupByCategory: boolean;
   onSearch: (value: string) => void;
-  onViewChange: (view: LibraryView) => void;
   onToggleGroup: () => void;
   onSelect: (name: string) => void;
   onRefresh: () => void;
   onImport: () => void;
   onClearAppFilter: () => void;
   onOpenWith: (name: string, opener: SkillOpener) => void;
-}
-
-function supportedApps(skill: SkillRecord, appSupport: AppSupport) {
-  return skill.visibility.filter((state) => appSupport[state.app] && state.enabled).map((state) => state.app);
 }
 
 function matchesAppFilter(skill: SkillRecord, appFilter?: AppKind) {
@@ -49,13 +42,10 @@ export function SkillLibrary({
   selectedName,
   search,
   appFilter,
-  appSupport,
-  view,
   loading,
   busyKey,
   groupByCategory,
   onSearch,
-  onViewChange,
   onToggleGroup,
   onSelect,
   onRefresh,
@@ -66,11 +56,13 @@ export function SkillLibrary({
   const optionRefs = useRef(new Map<string, HTMLButtonElement>());
   const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set());
   const needle = search.trim().toLocaleLowerCase();
-  const visible = skills.filter((skill) => {
+  const visible = useMemo(() => skills.filter((skill) => {
     const matchesSearch = !needle || skill.name.toLocaleLowerCase().includes(needle)
       || (skill.description || "").toLocaleLowerCase().includes(needle);
     return matchesSearch && matchesAppFilter(skill, appFilter);
-  });
+  }), [skills, needle, appFilter]);
+  const groups = useMemo(() => groupSkills(visible), [visible]);
+  const allCollapsed = groups.length > 0 && groups.every((group) => collapsed.has(group.name));
 
   const moveSelection = (event: React.KeyboardEvent<HTMLButtonElement>, name: string) => {
     const current = visible.findIndex((skill) => skill.name === name);
@@ -94,9 +86,14 @@ export function SkillLibrary({
       });
   };
 
+  const toggleAllGroups = () => {
+    if (allCollapsed) setCollapsed(new Set());
+    else setCollapsed(new Set(groups.map((group) => group.name)));
+  };
+
   const renderSkill = (skill: SkillRecord) => (
     <div
-      className={`${view === "list" ? "skill-row" : "skill-card"} ${skill.name === selectedName ? "selected" : ""}`}
+      className={`skill-row ${skill.name === selectedName ? "selected" : ""}`}
       key={skill.name}
     >
       <button
@@ -111,31 +108,56 @@ export function SkillLibrary({
         onClick={() => onSelect(skill.name)}
         onKeyDown={(event) => moveSelection(event, skill.name)}
       >
-        {view === "list" ? (
-          <span className="skill-copy"><strong>{skill.name}</strong><small>{skill.description || "暂无描述"}</small></span>
-        ) : (
-          <>
-            <strong className="skill-card-name">{skill.name}</strong>
-            <span className="skill-card-apps" aria-label="支持的应用">
-              {supportedApps(skill, appSupport).map((app) => <span className="skill-card-app" key={app} title={APP_LABELS[app]}><AppIcon app={app} /></span>)}
-            </span>
-          </>
-        )}
+        <span className="skill-copy"><strong>{skill.name}</strong><small>{skill.description || "暂无描述"}</small></span>
       </button>
-      {view === "list" && (
-        <OpenWithMenu
-          label={skill.name}
-          busyKey={busyKey}
-          busyPrefix={skill.name}
-          onOpenWith={(opener) => onOpenWith(skill.name, opener)}
-          onNavigate={() => onSelect(skill.name)}
-        />
-      )}
+      <OpenWithMenu
+        label={skill.name}
+        busyKey={busyKey}
+        busyPrefix={skill.name}
+        onOpenWith={(opener) => onOpenWith(skill.name, opener)}
+        onNavigate={() => onSelect(skill.name)}
+      />
     </div>
   );
 
   const emptyState = (
     <div className="empty-state"><strong>没有匹配的 Skill</strong><span>调整搜索或筛选条件</span></div>
+  );
+
+  const groupedView = (
+    <div className="skill-grouped" role="listbox" aria-label="已安装 Skills">
+      {groups.map((group) => {
+        const isCollapsed = collapsed.has(group.name);
+        return (
+          <section className="skill-group" key={group.name}>
+            <button
+              className="skill-group-header"
+              aria-expanded={!isCollapsed}
+              onClick={() => toggleGroup(group.name)}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" className={`skill-group-chevron ${isCollapsed ? "" : "skill-group-chevron--open"}`}>
+                <path d="M9 6l6 6-6 6V6z" />
+              </svg>
+              <strong>{group.name}</strong>
+              <small>{group.items.length}</small>
+            </button>
+            {!isCollapsed && (
+              <div className="skill-list">
+                {group.items.map(renderSkill)}
+              </div>
+            )}
+          </section>
+        );
+      })}
+      {!visible.length && emptyState}
+    </div>
+  );
+
+  const flatView = (
+    <div className="skill-list" role="listbox" aria-label="已安装 Skills">
+      {visible.map(renderSkill)}
+      {!visible.length && emptyState}
+    </div>
   );
 
   return (
@@ -162,48 +184,17 @@ export function SkillLibrary({
             <kbd>⌘ K</kbd>
           </label>
           {appFilter && <button className="app-filter-chip" onClick={onClearAppFilter}>{APP_LABELS[appFilter]} ×</button>}
-          <div className="view-switch" role="group" aria-label="视图切换">
-            <button className={view === "list" ? "active" : ""} aria-pressed={view === "list"} onClick={() => onViewChange("list")}>列表</button>
-            <button className={view === "cards" ? "active" : ""} aria-pressed={view === "cards"} onClick={() => onViewChange("cards")}>卡片</button>
-          </div>
           <button className="ghost-button group-toggle" onClick={onToggleGroup} aria-pressed={groupByCategory}>
             {groupByCategory ? "已分组" : "未分组"}
           </button>
+          {groupByCategory && groups.length > 0 && (
+            <button className="ghost-button group-toggle" onClick={toggleAllGroups} aria-pressed={!allCollapsed}>
+              {allCollapsed ? "全部展开" : "全部收起"}
+            </button>
+          )}
         </div>
         <div className="collection-scroll">
-          {groupByCategory ? (
-            <div className="skill-grouped" role="listbox" aria-label="已安装 Skills">
-              {groupSkills(visible).map((group) => {
-                const isCollapsed = collapsed.has(group.name);
-                return (
-                  <section className="skill-group" key={group.name}>
-                    <button
-                      className="skill-group-header"
-                      aria-expanded={!isCollapsed}
-                      onClick={() => toggleGroup(group.name)}
-                    >
-                      <svg viewBox="0 0 24 24" aria-hidden="true" className={`skill-group-chevron ${isCollapsed ? "" : "skill-group-chevron--open"}`}>
-                        <path d="M9 6l6 6-6 6V6z" />
-                      </svg>
-                      <strong>{group.name}</strong>
-                      <small>{group.items.length}</small>
-                    </button>
-                    {!isCollapsed && (
-                      <div className={view === "list" ? "skill-list" : "skill-grid"}>
-                        {group.items.map(renderSkill)}
-                      </div>
-                    )}
-                  </section>
-                );
-              })}
-              {!visible.length && emptyState}
-            </div>
-          ) : (
-            <div className={view === "list" ? "skill-list" : "skill-grid"} role="listbox" aria-label="已安装 Skills">
-              {visible.map(renderSkill)}
-              {!visible.length && emptyState}
-            </div>
-          )}
+          {groupByCategory ? groupedView : flatView}
         </div>
       </div>
     </section>

@@ -301,21 +301,14 @@ pub fn set_app_support(app: AppKind, enabled: bool) -> Result<SettingsSnapshot, 
 }
 
 #[tauri::command]
-pub fn update_ui_preferences(
-    last_section: String,
-    library_view: String,
-) -> Result<SettingsSnapshot, CommandError> {
+pub fn update_ui_preferences(last_section: String) -> Result<SettingsSnapshot, CommandError> {
     let allowed_sections = ["library", "import", "backups", "settings"];
-    let allowed_views = ["list", "cards"];
-    if !allowed_sections.contains(&last_section.as_str())
-        || !allowed_views.contains(&library_view.as_str())
-    {
+    if !allowed_sections.contains(&last_section.as_str()) {
         return Err(CommandError::new(ErrorCode::InvalidPath, "界面偏好值无效"));
     }
     let home = current_home()?;
     let (mut settings, _) = loaded_settings(&home)?;
     settings.last_section = last_section;
-    settings.library_view = library_view;
     save_settings(&home, &settings)?;
     Ok(settings_snapshot(&home, settings, None))
 }
