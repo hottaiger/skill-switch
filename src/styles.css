@@ -67,7 +67,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .app-shell { display: grid; grid-template-columns: 170px minmax(0, 1fr); height: 100vh; background: var(--window); }
 .sidebar { position: relative; padding: 20px 12px; background: var(--sidebar); border-right: 1px solid var(--line); overflow-y: auto; }
 .brand { display: flex; align-items: center; gap: 10px; padding: 1px 8px 22px; font-size: var(--font-body); font-weight: 680; }
-.brand-mark { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; color: var(--on-accent); background: var(--accent); box-shadow: 0 5px 14px var(--accent-ring); font-size: var(--font-secondary); }
+.brand-mark { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; color: var(--on-accent); background: var(--accent); box-shadow: 0 5px 14px var(--accent-ring); line-height: 0; }
+.brand-mark-icon { display: block; width: 22px; height: 22px; }
 .nav-group-label, .eyebrow { margin: 12px 8px 6px; color: var(--muted); font-size: var(--font-secondary); font-weight: 650; letter-spacing: .08em; text-transform: uppercase; }
 .nav-item { display: flex; align-items: center; gap: 9px; width: 100%; min-height: 36px; padding: 8px 10px; margin: 2px 0; border: 0; border-radius: 7px; background: transparent; color: var(--text-2); font-size: var(--font-secondary); text-align: left; cursor: pointer; transition: background-color 150ms ease, color 150ms ease; }
 .nav-item:hover { background: var(--hover); }
@@ -99,7 +100,7 @@ button:disabled { opacity: .48; cursor: default; }
 .page-title-row h1 { margin: 0 0 4px; font-size: var(--font-title); letter-spacing: -.4px; }
 .page-title-row p { margin: 0; color: var(--muted); font-size: var(--font-secondary); }
 .page-actions { display: flex; align-items: center; gap: 8px; }
-.library-controls { display: grid; grid-template-columns: minmax(180px, 1fr) auto auto auto; align-items: center; gap: 10px; margin-bottom: 14px; }
+.library-controls { display: grid; grid-template-columns: minmax(180px, 1fr) repeat(4, auto); align-items: center; gap: 10px; margin-bottom: 14px; }
 .library-controls .search-box { min-width: 0; }
 .app-filter-chip { min-height: 32px; padding: 6px 11px; border: 1px solid var(--accent); border-radius: 999px; background: var(--selected); color: var(--accent); font-size: var(--font-secondary); cursor: pointer; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease; }
 .app-filter-chip:hover { background: var(--hover); }

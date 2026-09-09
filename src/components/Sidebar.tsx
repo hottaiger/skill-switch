@@ -1,5 +1,6 @@
 import { ALL_APPS, APP_LABELS, type AppKind, type AppSupport, type Section } from "../types";
 import { AppIcon } from "./AppIcon";
+import { BrandMark } from "./BrandMark";
 
 interface SidebarProps {
   section: Section;
@@ -26,7 +27,7 @@ export function Sidebar({
 }: SidebarProps) {
   return (
     <aside className="sidebar">
-      <div className="brand"><span className="brand-mark">SS</span><span>Skill Switch</span></div>
+      <div className="brand"><span className="brand-mark"><BrandMark /></span><span>Skill Switch</span></div>
       <div className="nav-group-label">管理</div>
       <nav aria-label="主导航">
         {navigation.map((item) => (

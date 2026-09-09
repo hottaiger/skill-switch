@@ -141,6 +141,27 @@ beforeEach(() => {
 
 afterEach(cleanup);
 
+it("renders the Switch Loop brand mark in the sidebar", async () => {
+  render(<App />);
+  expect(await screen.findByText("Skill Switch")).toBeVisible();
+
+  const mark = document.querySelector<SVGSVGElement>(".brand-mark-icon");
+  expect(mark).toHaveAttribute("viewBox", "0 0 24 24");
+  expect(mark?.querySelectorAll("path")).toHaveLength(2);
+  expect(mark?.querySelector("circle")).toBeInTheDocument();
+});
+
+it("renders the card view with enabled application icons", async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await screen.findByRole("option", { name: "detail-koala-ui" });
+
+  await user.click(screen.getByRole("button", { name: "卡片" }));
+
+  expect(document.querySelectorAll(".skill-grid .skill-card")).toHaveLength(4);
+  expect(screen.getAllByTitle("Zcode")).toHaveLength(4);
+});
+
 it("opens the inspector from a selected Skill and renders fixed native visibility", async () => {
   const user = userEvent.setup();
   render(<App />);

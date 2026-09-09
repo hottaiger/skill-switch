@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
-import { APP_LABELS, type AppKind, type AppSupport, type SkillOpener, type SkillRecord } from "../types";
+import { APP_LABELS, type AppKind, type AppSupport, type LibraryView, type SkillOpener, type SkillRecord } from "../types";
+import { AppIcon } from "./AppIcon";
 import { OpenWithMenu } from "./OpenWithMenu";
 
 interface SkillLibraryProps {
@@ -55,6 +56,7 @@ export function SkillLibrary({
 }: SkillLibraryProps) {
   const optionRefs = useRef(new Map<string, HTMLButtonElement>());
   const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set());
+  const [view, setView] = useState<LibraryView>("list");
   const needle = search.trim().toLocaleLowerCase();
   const visible = useMemo(() => skills.filter((skill) => {
     const matchesSearch = !needle || skill.name.toLocaleLowerCase().includes(needle)
@@ -120,8 +122,56 @@ export function SkillLibrary({
     </div>
   );
 
+  const renderCard = (skill: SkillRecord) => {
+    const enabledApps = skill.visibility
+      .filter((state) => state.enabled)
+      .map((state) => state.app);
+
+    return (
+      <article
+        className={`skill-card ${skill.name === selectedName ? "selected" : ""}`}
+        key={skill.name}
+      >
+        <button
+          role="option"
+          aria-selected={skill.name === selectedName}
+          aria-label={skill.name}
+          className="skill-main"
+          ref={(node) => {
+            if (node) optionRefs.current.set(skill.name, node);
+            else optionRefs.current.delete(skill.name);
+          }}
+          onClick={() => onSelect(skill.name)}
+          onKeyDown={(event) => moveSelection(event, skill.name)}
+        >
+          <span className="skill-card-name">{skill.name}</span>
+          <span className="skill-card-apps" aria-label="已启用应用">
+            {enabledApps.map((app) => (
+              <span className="skill-card-app" key={app} title={APP_LABELS[app]} aria-label={APP_LABELS[app]}>
+                <AppIcon app={app} />
+              </span>
+            ))}
+          </span>
+        </button>
+        <OpenWithMenu
+          label={skill.name}
+          busyKey={busyKey}
+          busyPrefix={skill.name}
+          onOpenWith={(opener) => onOpenWith(skill.name, opener)}
+          onNavigate={() => onSelect(skill.name)}
+        />
+      </article>
+    );
+  };
+
   const emptyState = (
     <div className="empty-state"><strong>没有匹配的 Skill</strong><span>调整搜索或筛选条件</span></div>
+  );
+
+  const renderGroupItems = (items: SkillRecord[]) => (
+    view === "cards"
+      ? <div className="skill-grid">{items.map(renderCard)}</div>
+      : <div className="skill-list">{items.map(renderSkill)}</div>
   );
 
   const groupedView = (
@@ -142,9 +192,7 @@ export function SkillLibrary({
               <small>{group.items.length}</small>
             </button>
             {!isCollapsed && (
-              <div className="skill-list">
-                {group.items.map(renderSkill)}
-              </div>
+              renderGroupItems(group.items)
             )}
           </section>
         );
@@ -154,8 +202,8 @@ export function SkillLibrary({
   );
 
   const flatView = (
-    <div className="skill-list" role="listbox" aria-label="已安装 Skills">
-      {visible.map(renderSkill)}
+    <div className={view === "cards" ? "skill-grid" : "skill-list"} role="listbox" aria-label="已安装 Skills">
+      {visible.map(view === "cards" ? renderCard : renderSkill)}
       {!visible.length && emptyState}
     </div>
   );
@@ -187,6 +235,24 @@ export function SkillLibrary({
           <button className="ghost-button group-toggle" onClick={onToggleGroup} aria-pressed={groupByCategory}>
             {groupByCategory ? "已分组" : "未分组"}
           </button>
+          <div className="view-switch" role="group" aria-label="视图">
+            <button
+              type="button"
+              className={view === "list" ? "active" : ""}
+              aria-pressed={view === "list"}
+              onClick={() => setView("list")}
+            >
+              列表
+            </button>
+            <button
+              type="button"
+              className={view === "cards" ? "active" : ""}
+              aria-pressed={view === "cards"}
+              onClick={() => setView("cards")}
+            >
+              卡片
+            </button>
+          </div>
           {groupByCategory && groups.length > 0 && (
             <button className="ghost-button group-toggle" onClick={toggleAllGroups} aria-pressed={!allCollapsed}>
               {allCollapsed ? "全部展开" : "全部收起"}
