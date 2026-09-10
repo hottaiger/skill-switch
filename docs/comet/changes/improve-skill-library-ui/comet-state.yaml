@@ -1,19 +1,165 @@
-schema: comet.native.v3
-minimum_runtime_version: 3
-revision: 1
-verification_protocol: legacy-v1
+schema: comet.native.v4
 name: improve-skill-library-ui
 language: zh-CN
-phase: shape
+phase: build
+status: active
+state_version: 22
 brief: brief.md
-approval: null
-approved_contract_hash: null
+shape_confirmation_hash: 26e36f90776f6f478ba3cc218cb2c5fe3f99bea503186aaeadf6da1d89c6e4dc
 spec_changes: []
+workspace:
+  isolation: current
+  change_branch: null
+  target_branch: null
+  finish: null
+loop:
+  stage: building
+  goal_cycle: 3
+  iteration: 1
+  attempt: 0
+  retry_epoch: 0
+  failed_iteration_count: 0
+  no_progress_count: 0
+  execution_failure_count: 0
+  previous_unresolved_ids: []
+  next_action: submit-builder-candidate
+acceptance:
+  - id: A1
+    source: brief.md
+    text: 卡片视图在多行多列时视觉整齐，名称与图标对齐，无参差。
+    result: pending
+    reason: null
+  - id: A2
+    source: brief.md
+    text: 详情页可见"最近修改时间"字段，格式清晰。
+    result: pending
+    reason: null
+  - id: A3
+    source: brief.md
+    text: zcode 出现在应用列表、Sidebar、详情页可见性列表、卡片图标中，路径为 ~/.agents/skills，状态为"自动可见"，不可逐项启停。
+    result: pending
+    reason: null
+  - id: A4
+    source: brief.md
+    text: 点击某处箭头后弹出"打开方式"下拉，可选用指定软件打开对应文件/目录。
+    result: pending
+    reason: null
+  - id: A5
+    source: brief.md
+    text: Sidebar 品牌标记显示 Switch Loop 图形，浅色/深色主题下均清晰，缩小后仍保持可识别；第三方应用图标语义不变。
+    result: pending
+    reason: null
+  - id: A6
+    source: brief.md
+    text: Dock / Finder 显示的应用包图标为 Switch Loop（非旧版 SS 字母图标）。
+    result: pending
+    reason: null
+builder_handoff: null
+blockers: []
+verification: null
+history:
+  - goal_cycle: 1
+    iteration: 0
+    attempt: 0
+    outcome: recovery
+    unresolved_ids:
+      - A1
+      - A2
+      - A3
+      - A4
+    summary:
+      text: 从旧版 comet.native.v3 shape 状态恢复；旧版 Loop、验证结论和运行记录未继承。
+      truncated: false
+    completed_at: 2026-08-05T00:00:00.000Z
+  - goal_cycle: 1
+    iteration: 0
+    attempt: 0
+    outcome: recovery
+    unresolved_ids: []
+    summary:
+      text: Native confirmed acceptance criteria changed
+      truncated: false
+    completed_at: 2026-09-09T05:17:07.223Z
+  - goal_cycle: 2
+    iteration: 1
+    attempt: 1
+    outcome: fail
+    unresolved_ids:
+      - A1
+      - A3
+    summary:
+      text: A1 未实现，且 A3 因缺少卡片视图未完整满足；其余验收项有源码证据支持。
+      truncated: false
+    completed_at: 2026-09-09T05:26:11.594Z
+  - goal_cycle: 2
+    iteration: 2
+    attempt: 1
+    outcome: execution-error
+    unresolved_ids: []
+    summary:
+      text: "Native Verifier response was invalid: Native Verifier acceptance coverage
+        is invalid (duplicate: none; unknown: A2, A4; missing: none)"
+      truncated: false
+    completed_at: 2026-09-09T05:33:10.294Z
+  - goal_cycle: 2
+    iteration: 2
+    attempt: 2
+    outcome: recovery
+    unresolved_ids: []
+    summary:
+      text: Repair verification passed for A1, A3, A5; final full verification is
+        required.
+      truncated: false
+    completed_at: 2026-09-09T05:36:08.116Z
+  - goal_cycle: 2
+    iteration: 2
+    attempt: 3
+    outcome: pass
+    unresolved_ids: []
+    summary:
+      text: A1-A5 均通过独立源码、后端链路和测试证据核验。
+      truncated: false
+    completed_at: 2026-09-09T05:39:46.501Z
+  - goal_cycle: 2
+    iteration: 2
+    attempt: 3
+    outcome: recovery
+    unresolved_ids: []
+    summary:
+      text: Local Runtime was unavailable at Archive ready; the synchronized
+        implementation must be verified again.
+      truncated: false
+    completed_at: 2026-09-09T06:16:42.107Z
+  - goal_cycle: 2
+    iteration: 2
+    attempt: 4
+    outcome: execution-error
+    unresolved_ids: []
+    summary:
+      text: 独立 Verifier 任务长时间无结果（自 2026-09-09 启动后仍为 running），按超时丢失处理；用户已反馈
+        Dock/任务栏图标仍为旧版，需修订需求后回到实现。
+      truncated: false
+    completed_at: 2026-09-10T07:24:24.853Z
+  - goal_cycle: 2
+    iteration: 2
+    attempt: 4
+    outcome: recovery
+    unresolved_ids: []
+    summary:
+      text: 用户反馈 Dock/任务栏仍是旧图标，要求一并替换为 Switch Loop；此前仅应用内品牌标记的范围需修订。
+      truncated: false
+    completed_at: 2026-09-10T07:24:49.328Z
+history_overflow:
+  dropped_entries: 0
+  first_dropped_at: null
+  last_dropped_at: null
+  outcome_counts:
+    pass: 0
+    fail: 0
+    blocked: 0
+    execution-error: 0
+    recovery: 0
 verification_result: pending
 verification_report: null
-implementation_scope: null
-verification_evidence: null
-partial_allowance: null
 archived: false
-created_at: 2026-08-05
-run_id: null
+created_at: 2026-08-05T00:00:00.000Z

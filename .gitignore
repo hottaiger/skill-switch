@@ -7,3 +7,13 @@ src-tauri/target/
 *.tsbuildinfo
 vite.config.js
 vite.config.d.ts
+.agents/
+.codex/
+.cursor/
+.zcode/
+.comet-*.json
+# >>> Comet managed project state >>>
+!/.comet/
+/.comet/*
+!/.comet/config.yaml
+# <<< Comet managed project state <<<
