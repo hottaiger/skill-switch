@@ -1,16 +1,50 @@
 # Skill Switch
 
-独立的 macOS Agent Skills 管理应用。使用 Tauri 2、React、TypeScript 和 Rust 构建。
+在 macOS 上一处管理多款 Agent 的 Skills：统一存放、按应用开关、安全导入，并可随时回滚。
 
-## 数据模型
+支持 Claude、Gemini、OpenCode、Hermes、Codex、Cursor、Zcode。
 
-`~/.agents/skills/` 是唯一受管 Skill 内容源。Claude、Gemini、OpenCode、Hermes 的 Skill 目录只保存经过冲突检查后创建的逐 Skill 软连接；Codex 和 Cursor 直接读取统一目录。
+## 安装
 
-Skill Switch 不读取、不迁移、不依赖 CC Switch 的数据库、配置、进程或代码。
+仅支持 **Apple Silicon（arm64）**。从 [最新 Release](https://github.com/hottaiger/skill-switch/releases/latest) 下载 `.dmg` 或 `.app` zip。
 
-## 默认目录
+本版本**未做 Apple 代码签名**。若提示无法验证开发者：
 
-| 应用 | 目录 |
+1. 在 Finder 中右键应用 →「打开」→ 再次「打开」
+2. 或到「系统设置 → 隐私与安全性」中允许打开
+
+## 功能亮点
+
+- **一处存放，多处使用**：Skill 内容统一在 `~/.agents/skills/`；Claude / Gemini / OpenCode / Hermes 通过受管软链接接入，Codex / Cursor / Zcode 直接读统一目录。
+- **按应用启用**：在技能详情里为每个 Skill 开关支持的应用，侧边栏可按应用筛选。
+- **本地导入与冲突处理**：扫描已知应用目录中的 Skill，归一到统一库；同名不同内容时由你选择保留哪一版，并自动备份。
+- **可恢复备份**：导入、替换、卸载都会留备份；每个 Skill 最多保留最近 5 份，可在备份页恢复。
+- **分类与检索**：列表 / 卡片视图、搜索、按分类分组；支持内置与自定义分类。
+- **快捷打开**：用访达、VS Code 或 Cursor 打开 Skill 目录。
+
+> **截图（待补充）**  
+> `docs/images/skill-library.png` — 技能库  
+> `docs/images/import.png` — 本地导入  
+> `docs/images/settings.png` — 设置
+
+## 界面一览
+
+| 模块 | 做什么 |
+|---|---|
+| 技能库 | 浏览、搜索、分类；查看详情并按应用启用 / 卸载 |
+| 本地导入 | 扫描并导入分散在各应用目录中的 Skill |
+| 备份 | 查看历史备份并恢复 |
+| 设置 | 开关支持的应用、调整可配置目录、管理自定义分类 |
+
+## 工作原理
+
+`~/.agents/skills/` 是唯一受管内容源。Claude、Gemini、OpenCode、Hermes 的 Skill 目录只保存经冲突检查后创建的逐 Skill 软链接；Codex、Cursor、Zcode 直接读取统一目录。Claude / Gemini / OpenCode / Hermes 目录可在设置中改为绝对路径；Codex / Cursor / Zcode 路径固定。
+
+Skill Switch **不**读取、迁移或依赖 CC Switch 的数据库、配置、进程或代码。
+
+### 默认路径
+
+| 用途 | 路径 |
 |---|---|
 | 统一数据源 | `~/.agents/skills/` |
 | Claude | `~/.claude/skills/` |
@@ -20,27 +54,25 @@ Skill Switch 不读取、不迁移、不依赖 CC Switch 的数据库、配置�
 | 配置 | `~/.skill-switch/config.json` |
 | 备份 | `~/.skill-switch/backups/` |
 
-四个应用目录可在设置页改为绝对路径。Codex 和 Cursor 路径固定。
+### 安全要点
 
-## 安全行为
-
-- 不覆盖普通目录、普通文件或未知软连接。
-- 删除软连接前校验其目标确实是对应 SSOT Skill。
-- 导入先复制到临时目录并校验内容哈希，再提交到统一目录。
-- 同名不同内容必须人工选择规范版本。
-- 导入、替换和卸载均创建可恢复备份；每个 Skill 保留最近 5 份。
-- Skill 内含外部软连接时拒绝复制和备份。
+- 不覆盖普通目录、普通文件或未知软链接
+- 删除软链接前校验目标确实对应统一库中的 Skill
+- 导入先复制到临时目录并校验内容哈希，再提交
+- 同名不同内容必须人工选择规范版本
+- 导入、替换和卸载均创建可恢复备份
+- Skill 内含外部软链接时拒绝复制和备份
 
 ## 开发
 
-需要 Node.js 20 或更新版本、pnpm、稳定版 Rust 和 macOS Tauri 构建依赖。
+需要 Node.js 20+、pnpm、稳定版 Rust，以及 macOS 上的 Tauri 构建依赖。技术栈：Tauri 2、React、TypeScript、Rust。
 
 ```bash
 pnpm install
 pnpm tauri dev
 ```
 
-## 验证
+### 验证
 
 ```bash
 pnpm typecheck
@@ -52,6 +84,6 @@ cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
 pnpm tauri build --debug
 ```
 
-若当前终端没有控制 Finder 的自动化权限，DMG 美化脚本会被 macOS 拦截；使用 `CI=true pnpm tauri build --debug` 跳过 Finder 美化，应用内容与功能不变。
+若终端没有控制 Finder 的自动化权限，DMG 美化可能被拦截；使用 `CI=true pnpm tauri build --debug` 可跳过 Finder 美化，应用内容不变。
 
-可通过 `SKILL_SWITCH_HOME=/path/to/fixture` 将所有文件系统操作隔离到测试 HOME。应用不会读取该目录之外的 Skill Switch 数据。
+可用 `SKILL_SWITCH_HOME=/path/to/fixture` 将文件系统操作隔离到测试 HOME。
