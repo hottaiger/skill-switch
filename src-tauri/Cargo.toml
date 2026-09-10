@@ -1,6 +1,6 @@
 [package]
 name = "skill-switch"
-version = "0.1.0"
+version = "0.1.1"
 description = "A local-first Agent Skills manager"
 authors = ["Skill Switch contributors"]
 edition = "2021"

@@ -61,7 +61,7 @@ export function Sidebar({
       >
         <span className="nav-icon">⚙</span>设置
       </button>
-      <span className="version">Skill Switch · v0.1</span>
+      <span className="version">Skill Switch · v0.1.1</span>
     </aside>
   );
 }

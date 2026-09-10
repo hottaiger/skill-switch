@@ -1,0 +1,105 @@
+name: Build and publish installers
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build macOS arm64
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Tauri installers
+        env:
+          CI: true
+        run: pnpm tauri build --target aarch64-apple-darwin
+
+      - name: Package app zip
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          if [[ "${GITHUB_REF_TYPE:-}" != "tag" ]]; then
+            VERSION="$(node -p "require('./package.json').version")"
+          fi
+          APP_DIR="src-tauri/target/aarch64-apple-darwin/release/bundle/macos"
+          DMG_DIR="src-tauri/target/aarch64-apple-darwin/release/bundle/dmg"
+          OUT_DIR="release-assets"
+          mkdir -p "$OUT_DIR"
+          ditto -c -k --sequesterRsrc --keepParent "$APP_DIR/Skill Switch.app" \
+            "$OUT_DIR/Skill-Switch-${VERSION}-aarch64-mac.zip"
+          cp "$DMG_DIR"/*.dmg "$OUT_DIR/"
+          ls -lah "$OUT_DIR"
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: skill-switch-macos-arm64
+          path: release-assets/*
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download installers
+        uses: actions/download-artifact@v4
+        with:
+          name: skill-switch-macos-arm64
+          path: release-assets
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          cat > release-notes-preamble.md <<'EOF'
+          ## 安装说明（macOS Apple Silicon）
+
+          1. 下载 `Skill Switch_*.dmg` 或 `Skill-Switch-*-aarch64-mac.zip`
+          2. 打开 `.dmg` 后将应用拖到「应用程序」，或解压 `.zip` 后运行 `.app`
+          3. 本版本**未做 Apple 代码签名**。若系统提示「无法验证开发者」：
+             - 在 Finder 中右键应用 →「打开」→ 再次「打开」
+             - 或到「系统设置 → 隐私与安全性」中允许打开
+
+          仅支持 Apple Silicon（arm64）。
+
+          ---
+
+          EOF
+          gh release create "${GITHUB_REF_NAME}" release-assets/* \
+            --title "Skill Switch ${GITHUB_REF_NAME}" \
+            --notes-file release-notes-preamble.md \
+            --generate-notes \
+            --repo "${GITHUB_REPOSITORY}"
