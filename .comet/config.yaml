@@ -10,29 +10,29 @@ workflows:
 ambient_resume: true
 # Native 工作流配置，不会改变 Classic 的状态或行为。
 native:
-  # Native 规格和 change 的存放根目录；运行时数据始终位于 .comet。
+  # Native 产物的存放根目录，包括规格、change 和运行时数据。
   artifact_root: docs
   # Native 工作流文档使用的产物语言。
   # 可选值：en | zh-CN
   language: zh-CN
-  # Native 提问澄清问题的方式：batch 每轮一次提出当前所有可回答的问题（默认），sequential 每轮只问一个。
-  # 可选值：batch | sequential
+  # Native 每轮询问一个问题，或一次提出当前所有可回答的问题。
+  # 可选值：sequential | batch
   clarification_mode: sequential
-  # Native 归档检查成功后自动归档，或等待用户明确确认。
+  # Native 归档预演成功后自动归档，或等待用户明确确认。
   # 可选值：automatic | required
   archive_confirmation: automatic
-  # 同一个已确认验收目标最多允许的 Verify 失败次数；达到上限后停止完成循环。
+  # 同一份已确认 contract 最多允许的 Verify 失败次数；达到上限后停止完成循环。
   max_verify_failures: 5
-# 当前项目的个人记忆自动学习与注入策略。
-memory:
-  # 是否允许当前项目通过工作流事件自动沉淀新的个人记忆。
-  # 可选值：true | false
-  learning: true
-  # 是否允许当前项目把个人记忆自动注入 Agent 上下文。
-  # 可选值：true | false
-  retrieval: true
-# 普通 Comet 任务使用的项目知识检索 Provider。
-knowledge:
-  # 项目知识 Provider。
-  # 可选值：local | remote
-  provider: local
+  # Native 内容快照使用的可审计项目范围与有界工作预算。
+  snapshot:
+    # Native 快照纳入的项目相对路径；模式使用 /，支持 *、** 和 ?。
+    include:
+      - "**/*"
+    # 从纳入范围中排除路径；新 change 会把排除策略绑定到 baseline。
+    exclude: []
+    # 单次快照最多捕获的文件数；大型 monorepo 可按需提高。
+    max_files: 10000
+    # 单次快照最多哈希的文件内容总字节数；内容采用流式读取，不依赖 Git hash。
+    max_total_bytes: 268435456
+    # 单次快照的最长执行时间（毫秒）；较慢或更大的仓库应与字节预算一并提高。
+    max_duration_ms: 60000
