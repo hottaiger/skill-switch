@@ -85,13 +85,19 @@ jobs:
           cat > release-notes-preamble.md <<'EOF'
           ## 安装说明（macOS Apple Silicon）
 
-          1. 下载 `Skill Switch_*.dmg` 或 `Skill-Switch-*-aarch64-mac.zip`
-          2. 打开 `.dmg` 后将应用拖到「应用程序」，或解压 `.zip` 后运行 `.app`
-          3. 本版本**未做 Apple 代码签名**。若系统提示「无法验证开发者」：
-             - 在 Finder 中右键应用 →「打开」→ 再次「打开」
-             - 或到「系统设置 → 隐私与安全性」中允许打开
+          仅支持 Apple Silicon（arm64）。本版本**未做 Apple 代码签名和公证**。用浏览器下载后，macOS 常会误报「已损坏，无法打开」；应用本身没有坏。右键「打开」或到「系统设置 → 隐私与安全性」允许，对这条提示通常无效。
 
-          仅支持 Apple Silicon（arm64）。
+          1. 下载 `Skill.Switch_*_aarch64.dmg` 或 `Skill-Switch-*-aarch64-mac.zip`
+          2. 打开 `.dmg`，把 **Skill Switch** 拖到 **应用程序**（或解压 `.zip` 后把 `.app` 拖进去）
+          3. 打开「终端」，执行一次：
+
+          ```bash
+          xattr -cr "/Applications/Skill Switch.app"
+          ```
+
+          4. 打开 **访达 → 应用程序**，双击 **Skill Switch**。不要从 DMG 窗口里直接打开。
+
+          安装完成后即可当普通应用使用，不必每次再执行命令。若重新从 DMG / zip 拷贝安装，需要再执行一次上面的命令。
 
           ---
 
